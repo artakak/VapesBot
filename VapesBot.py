@@ -76,7 +76,6 @@ class ChinaBot:
         dp.addTelegramCommandHandler('next', self.get_next)
         dp.addTelegramCommandHandler('help', self.help)
         dp.addTelegramCommandHandler('about', self.about)
-        dp.addTelegramCommandHandler('today', self.today)
         dp.addTelegramCommandHandler('TOP', self.give)
         dp.addTelegramCommandHandler('search', self.search)
         dp.addTelegramCommandHandler('photo', self.photo)
@@ -139,15 +138,6 @@ class ChinaBot:
         self.logger_wrap(update.message, 'about')
         bot.sendMessage(update.message.chat_id, text=self.about_text, parse_mode=ParseMode.MARKDOWN)
 
-    def today(self, bot, update, args):
-        self.logger_wrap(update.message, 'today')
-        result = ''
-        if args:
-            result = self.trends_wrap('daily', args[0])
-        else:
-            result = self.trends_wrap('daily')
-        bot.sendMessage(update.message.chat_id, text=result, parse_mode=ParseMode.MARKDOWN)
-
     def search(self, bot, update):
         self.logger_wrap(update.message, 'search')
         bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию', parse_mode=ParseMode.MARKDOWN)
@@ -162,17 +152,15 @@ class ChinaBot:
         self.logger_wrap(update.message, 'give')
         self.custom_keyboard = [['/previous','/next'],['/photo','/close']]
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
-        self.result["'"+str(update.message.chat_id)+"'"] = self.product_wrap()
-        #print(self.result["'"+str(update.message.chat_id)+"'"])
-        #bot.sendMessage(update.message.chat_id, text='\n'.join(result), parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
-        self.count["'"+str(update.message.chat_id)+"'"] = 0
+        self.result[str(update.message.chat_id)] = self.product_wrap()
+        self.count[str(update.message.chat_id)] = 0
         self.photo_count = 0
-        bot.sendMessage(update.message.chat_id, text=self.result["'"+str(update.message.chat_id)+"'"][self.count["'"+str(update.message.chat_id)+"'"]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
+        bot.sendMessage(update.message.chat_id, text=self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
 
     def photo(self, bot, update):
         self.logger_wrap(update.message, 'photo')
         bot.sendChatAction(update.message.chat_id, action=telegram.ChatAction.TYPING)
-        link = self.photo[str(self.count["'"+str(update.message.chat_id)+"'"])]
+        link = self.photo[str(self.count[str(update.message.chat_id)])]
         try:
             bot.sendPhoto(update.message.chat_id, photo=str(link[self.photo_count]))
             self.photo_count +=1
@@ -184,24 +172,24 @@ class ChinaBot:
     def get_next(self, bot, update):
         self.logger_wrap(update.message, 'next')
         try:
-            self.count["'"+str(update.message.chat_id)+"'"] += 1
-            bot.sendMessage(update.message.chat_id, text=self.result["'"+str(update.message.chat_id)+"'"][self.count["'"+str(update.message.chat_id)+"'"]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
+            self.count[str(update.message.chat_id)] += 1
+            bot.sendMessage(update.message.chat_id, text=self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
         except:
             self.start(bot, update)
 
     def get_previous(self, bot, update):
         self.logger_wrap(update.message, 'previous')
         try:
-            self.count["'"+str(update.message.chat_id)+"'"] -= 1
-            bot.sendMessage(update.message.chat_id, text=self.result["'"+str(update.message.chat_id)+"'"][self.count["'"+str(update.message.chat_id)+"'"]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
+            self.count[str(update.message.chat_id)] -= 1
+            bot.sendMessage(update.message.chat_id, text=self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
         except:
             self.start(bot, update)
 
     def close(self, bot, update):
         self.logger_wrap(update.message, 'close')
         try:
-            self.count["'"+str(update.message.chat_id)+"'"] += 0
-            self.result["'"+str(update.message.chat_id)+"'"] = []
+            self.count[str(update.message.chat_id)] += 0
+            self.result[str(update.message.chat_id)] = []
             self.start(bot, update)
         except:
             self.start(bot, update)
