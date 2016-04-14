@@ -198,7 +198,7 @@ class ChinaBot:
         self.custom_keyboard = [['/random'],
                                 ['/photo','/close']]
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
-        self.result[str(update.message.chat_id)] = self.product_wrap('Random')
+        self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, 'Random')
         self.count[str(update.message.chat_id)] = 0
         self.photo_count = 0
         bot.sendMessage(update.message.chat_id, text=self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
