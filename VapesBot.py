@@ -223,30 +223,35 @@ class ChinaBot:
         self.logger_wrap(update.message, 'photo')
         bot.sendChatAction(update.message.chat_id, action=telegram.ChatAction.TYPING)
         link = self.photo[str(self.count[str(update.message.chat_id)])]
-        try:
+        if self.photo_count+1 <= len(link):
+            bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.photo_count+1), str(len(link))), parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
             bot.sendPhoto(update.message.chat_id, photo=str(link[self.photo_count]))
             self.photo_count +=1
-        except:
+        else:
             self.photo_count = 0
+            bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.photo_count+1), str(len(link))), parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
             bot.sendPhoto(update.message.chat_id, photo=str(link[self.photo_count]))
+            self.photo_count +=1
 
 
     def get_next(self, bot, update):
         self.logger_wrap(update.message, 'next')
+        self.photo_count = 0
         try:
             self.count[str(update.message.chat_id)] += 1
             bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.count[str(update.message.chat_id)]+1), str(len(self.result[str(update.message.chat_id)])))+self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
         except:
+            self.count[str(update.message.chat_id)] -= 1
             bot.sendMessage(update.message.chat_id, text=u'Извините, это последний элемент в данной подборке '+Emoji.CONFUSED_FACE.decode('utf-8'), parse_mode=ParseMode.MARKDOWN)
             #self.start(bot, update)
 
     def get_previous(self, bot, update):
         self.logger_wrap(update.message, 'previous')
-        try:
-            if self.count[str(update.message.chat_id)] >= 1:
-                self.count[str(update.message.chat_id)] -= 1
-                bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.count[str(update.message.chat_id)]+1), str(len(self.result[str(update.message.chat_id)])))+self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
-        except:
+        self.photo_count = 0
+        if self.count[str(update.message.chat_id)] >= 1:
+            self.count[str(update.message.chat_id)] -= 1
+            bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.count[str(update.message.chat_id)]+1), str(len(self.result[str(update.message.chat_id)])))+self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
+        else:
             bot.sendMessage(update.message.chat_id, text=u'Извините, это первый элемент в данной подборке '+Emoji.CONFUSED_FACE.decode('utf-8'), parse_mode=ParseMode.MARKDOWN)
             #self.start(bot, update)
 
@@ -256,6 +261,7 @@ class ChinaBot:
             self.count[str(update.message.chat_id)] = 0
             self.result[str(update.message.chat_id)] = []
             self.search_query[str(update.message.chat_id)] = ''
+            self.photo_count = 0
             self.start(bot, update)
         except:
             self.start(bot, update)
