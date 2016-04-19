@@ -130,6 +130,7 @@ class ChinaBot:
 
         #print(products)
         final = [u'*Наименование*: '+product.product_name+'\n'
+                 u'*Магазин*: '+product.product_store_title+'\n'
                  u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
                  u'*Цена*: '+str(product.product_price)+u' РУБ\n'
                  u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
@@ -172,13 +173,13 @@ class ChinaBot:
     def give(self, bot, update, args):
         self.logger_wrap(update.message, 'give')
         if args in ['Search_Down','Search_Up']:
-            self.custom_keyboard = [['/previous','/next'],
+            self.custom_keyboard = [['/previous '+Emoji.LEFT_RIGHT_ARROW.decode('utf-8'),'/next '+Emoji.LEFT_RIGHT_ARROW.decode('utf-8')],
                                     ['/search_sort_up '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')+Emoji.UPWARDS_BLACK_ARROW.decode('utf-8'),'/search_sort_down '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')+Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')],
-                                    ['/photo','/close']]
+                                    ['/photo '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),'/close '+Emoji.CROSS_MARK.decode('utf-8')]]
         else:
-            self.custom_keyboard = [['/previous','/next'],
+            self.custom_keyboard = [['/previous '+Emoji.LEFT_RIGHT_ARROW.decode('utf-8'),'/next '+Emoji.LEFT_RIGHT_ARROW.decode('utf-8')],
                                     ['/sort_up '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')+Emoji.UPWARDS_BLACK_ARROW.decode('utf-8'),'/sort_down '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')+Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')],
-                                    ['/photo','/close']]
+                                    ['/photo '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),'/close '+Emoji.CROSS_MARK.decode('utf-8')]]
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, args)
         self.count[str(update.message.chat_id)] = 0
@@ -195,8 +196,8 @@ class ChinaBot:
 
     def random(self, bot, update):
         self.logger_wrap(update.message, 'random')
-        self.custom_keyboard = [['/random'],
-                                ['/photo','/close']]
+        self.custom_keyboard = [['/random '+Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8')],
+                                ['/photo '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),'/close '+Emoji.CROSS_MARK.decode('utf-8')]]
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, 'Random')
         self.count[str(update.message.chat_id)] = 0

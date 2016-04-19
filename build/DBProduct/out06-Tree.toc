@@ -1,4 +1,0 @@
-('e:\\soft\\py27\\lib\\site-packages\\inflection-0.3.1-py2.7.egg',
- None,
- set(['*.py', '*.pyc', '*.pyd', '*.pyo', '*.so', 'EGG-INFO']),
- [])

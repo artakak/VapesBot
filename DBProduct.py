@@ -41,7 +41,7 @@ def get_products_list():
         post_url_api = 'http://api.epn.bz/json'
         req_pull={'req1':{'action':'list_categories','lang':'en'},
                   'req2':{'action':'offer_info','id':'32262991446','currency':'RUR','lang':'en'},
-                  'req3':{'action':'search','store':'335020','limit':'10000','currency':'RUR','lang':'en'}
+                  'req3':{'action':'search','store':'335020,1247181,409690,1209066','limit':'10000','currency':'RUR','lang':'en'}
                   }
         post_data ={'user_api_key':'8d6467cedd2db955e23ef3d4e9b32760',
                    'user_hash':'o4jauozbl5c3jfrcco1droidutid00g4',
