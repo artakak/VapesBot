@@ -53,8 +53,9 @@ def get_products_list():
         print (post_req.text)
         data = json.loads(post_req.text)
         for product in data['results']['req3']['offers']:
-            all_img = ';'.join(product['all_images'])
-            db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['price'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
+            if 'pcs/lot' not in product['name'] and 'pcs' not in product['name']:
+                all_img = ';'.join(product['all_images'])
+                db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['price'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
 
 
 

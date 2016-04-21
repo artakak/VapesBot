@@ -281,10 +281,10 @@ class ChinaBot:
 
 def main():
     try:
-        bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
-        botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
-        #bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
-        #botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
+        #bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
+        #botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
+        bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
+        botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
 
     except Exception as e:
         logger.exception(e)
