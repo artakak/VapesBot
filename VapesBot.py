@@ -52,7 +52,6 @@ class Product(db.Model):
         return '<Product %r, %r>' % (self.product_id, self.product_name)
 
 class ChinaBot:
-    about_text = ('Электронные сигареты по доступным ценам http://china-vapes.ru')
 
     help_text = (
         'Функционал:\n'
@@ -147,6 +146,7 @@ class ChinaBot:
 
     def start(self, bot, update):
         self.logger_wrap(update.message, 'start')
+        bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n' + Emoji.CLOUD.decode('utf-8') * 3 + u' [China-Vapes.ru](http://china-vapes.ru) ' + Emoji.CLOUD.decode('utf-8') * 3, parse_mode=ParseMode.MARKDOWN)
         custom_keyboard = [['/TOP '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8'),'/random '+Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8')],
                            ['/search '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),'/help '+Emoji.ORANGE_BOOK.decode('utf-8')]]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
@@ -158,7 +158,7 @@ class ChinaBot:
 
     def about(self, bot, update):
         self.logger_wrap(update.message, 'about')
-        bot.sendMessage(update.message.chat_id, text=self.about_text, parse_mode=ParseMode.MARKDOWN)
+        bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n'+Emoji.CLOUD.decode('utf-8')*3+u' [China-Vapes.ru](http://china-vapes.ru) '+Emoji.CLOUD.decode('utf-8')*3, parse_mode=ParseMode.MARKDOWN)
 
     def search(self, bot, update):
         self.logger_wrap(update.message, 'search')
