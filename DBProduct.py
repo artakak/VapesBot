@@ -37,11 +37,12 @@ class Product(db.Model):
 
 
 def get_products_list():
-        result = ()
+        result = ('req3','req4')
         post_url_api = 'http://api.epn.bz/json'
         req_pull={'req1':{'action':'list_categories','lang':'en'},
                   'req2':{'action':'offer_info','id':'32262991446','currency':'RUR','lang':'en'},
-                  'req3':{'action':'search','store':'335020,1247181,409690,1209066','limit':'10000','currency':'RUR','lang':'en'}
+                  'req3':{'action':'search','store':'335020,1247181','limit':'10000','currency':'RUR','lang':'en'},
+                  'req4': {'action': 'search', 'store': '409690,1209066', 'limit': '10000','currency': 'RUR', 'lang': 'en'}
                   }
         post_data ={'user_api_key':'8d6467cedd2db955e23ef3d4e9b32760',
                    'user_hash':'o4jauozbl5c3jfrcco1droidutid00g4',
@@ -52,12 +53,11 @@ def get_products_list():
         #print (post_req.status_code)
         print (post_req.text)
         data = json.loads(post_req.text)
-        for product in data['results']['req3']['offers']:
-            if 'pcs/lot' not in product['name'] and 'pcs' not in product['name']:
-                all_img = ';'.join(product['all_images'])
-                db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['price'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
-
-
+        for k in result:
+            for product in data['results'][k]['offers']:
+                if 'pcs/lot' not in product['name'] and 'pcs' not in product['name'] and 'PCS' not in product['name']:
+                    all_img = ';'.join(product['all_images'])
+                    db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['price'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
 
 #print (get_products_list())
 

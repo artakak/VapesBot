@@ -133,12 +133,12 @@ class ChinaBot:
                  u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
                  u'*Цена*: '+str(product.product_price)+u' РУБ\n'
                  u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
-
         k = 0
+        self.photo[str(update.message.chat_id)] = {}
         for product in products:
-            self.photo[str(k)] = []
+            self.photo[str(update.message.chat_id)][str(k)] = []
             #self.photo[str(k)].append(product.product_picture)
-            self.photo[str(k)] = product.product_other_picture.split(';')
+            self.photo[str(update.message.chat_id)][str(k)] = product.product_other_picture.split(';')
             k+=1
 
         return final
@@ -223,7 +223,7 @@ class ChinaBot:
     def photo(self, bot, update):
         self.logger_wrap(update.message, 'photo')
         bot.sendChatAction(update.message.chat_id, action=telegram.ChatAction.TYPING)
-        link = self.photo[str(self.count[str(update.message.chat_id)])]
+        link = self.photo[str(update.message.chat_id)][str(self.count[str(update.message.chat_id)])]
         if self.photo_count+1 <= len(link):
             bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.photo_count+1), str(len(link))), parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
             bot.sendPhoto(update.message.chat_id, photo=str(link[self.photo_count]))
@@ -281,10 +281,10 @@ class ChinaBot:
 
 def main():
     try:
-        #bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
-        #botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
-        bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
-        botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
+        bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
+        botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
+        #bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
+        #botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
 
     except Exception as e:
         logger.exception(e)
