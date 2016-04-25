@@ -178,15 +178,15 @@ class ChinaBot:
             self.get_previous(bot, update)
         elif update.message.text == u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8'):
             self.get_next(bot, update)
-        elif update.message.text == u' По возрастанию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+        elif update.message.text == u'По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
             self.search_up(bot, update)
-        elif update.message.text == u' По убыванию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+        elif update.message.text == u'По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
             self.search_down(bot, update)
-        elif update.message.text == u' По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+        elif update.message.text == u'Пo возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
             self.top_up(bot, update)
-        elif update.message.text == u' По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+        elif update.message.text == u'Пo убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
             self.top_down(bot, update)
-        elif update.message.text == u'Фотографии ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
+        elif update.message.text == u'Фотографии ' + Emoji.CAMERA.decode('utf-8'):
             self.photog(bot, update)
         elif update.message.text == u'Закрыть ' + Emoji.CROSS_MARK.decode('utf-8'):
             self.start(bot, update)
@@ -203,12 +203,12 @@ class ChinaBot:
         self.logger_wrap(update.message, 'give')
         if args in ['Search_Down','Search_Up']:
             self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
-                                    [u' По возрастанию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u' По убыванию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
-                                    [u'Фотографии '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
+                                    [u'По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u'По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
+                                    [u'Фотографии '+Emoji.CAMERA.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
         else:
             self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
-                                    [u' По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u' По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
-                                    [u'Фотографии '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
+                                    [u'Пo возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u'Пo убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
+                                    [u'Фотографии '+Emoji.CAMERA.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, args)
         self.count[str(update.message.chat_id)] = 0
@@ -226,7 +226,7 @@ class ChinaBot:
     def random(self, bot, update):
         self.logger_wrap(update.message, 'random')
         self.custom_keyboard = [[u'Ещё разок '+Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8')],
-                                ['/photo '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),'/close '+Emoji.CROSS_MARK.decode('utf-8')]]
+                                [u'Фотографии '+Emoji.CAMERA.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, 'Random')
         self.count[str(update.message.chat_id)] = 0
