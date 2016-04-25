@@ -56,7 +56,7 @@ def get_products_list():
         for k in result:
             for product in data['results'][k]['offers']:
                 if 'pcs/lot' not in product['name'] and 'pcs' not in product['name'] and 'PCS' not in product['name']:
-                    all_img = ';'.join(product['all_images'])
+                    all_img = '|'.join(product['all_images'])
                     db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['price'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
 
 #print (get_products_list())

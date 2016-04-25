@@ -138,7 +138,7 @@ class ChinaBot:
         for product in products:
             self.photo[str(update.message.chat_id)][str(k)] = []
             #self.photo[str(k)].append(product.product_picture)
-            self.photo[str(update.message.chat_id)][str(k)] = product.product_other_picture.split(';')
+            self.photo[str(update.message.chat_id)][str(k)] = product.product_other_picture.split('|')
             k+=1
 
         return final
