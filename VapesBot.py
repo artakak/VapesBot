@@ -178,13 +178,13 @@ class ChinaBot:
             self.get_previous(bot, update)
         elif update.message.text == u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8'):
             self.get_next(bot, update)
-        elif update.message.text == Emoji.UPWARDS_BLACK_ARROW.decode('utf-8')+u' По возрастанию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+        elif update.message.text == u' По возрастанию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
             self.search_up(bot, update)
-        elif update.message.text == Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')+u' По убыванию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+        elif update.message.text == u' По убыванию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
             self.search_down(bot, update)
-        elif update.message.text == Emoji.UPWARDS_BLACK_ARROW.decode('utf-8')+u' По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+        elif update.message.text == u' По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
             self.top_up(bot, update)
-        elif update.message.text == Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')+u' По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+        elif update.message.text == u' По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
             self.top_down(bot, update)
         elif update.message.text == u'Фотографии ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
             self.photog(bot, update)
@@ -203,11 +203,11 @@ class ChinaBot:
         self.logger_wrap(update.message, 'give')
         if args in ['Search_Down','Search_Up']:
             self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
-                                    [Emoji.UPWARDS_BLACK_ARROW.decode('utf-8')+u' По возрастанию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')+u' По убыванию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
+                                    [u' По возрастанию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u' По убыванию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
                                     [u'Фотографии '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
         else:
             self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
-                                    [Emoji.UPWARDS_BLACK_ARROW.decode('utf-8')+u' По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')+u' По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
+                                    [u' По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u' По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
                                     [u'Фотографии '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, args)
@@ -310,10 +310,10 @@ class ChinaBot:
 
 def main():
     try:
-        bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
-        botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
-        #bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
-        #botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
+        #bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
+        #botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
+        bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
+        botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
 
     except Exception as e:
         logger.exception(e)
