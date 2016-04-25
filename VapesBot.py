@@ -58,7 +58,7 @@ class ChinaBot:
         '/TOP - Подборка товаров с наивысшим рейтингом\n'
         '/random - Показ случайного товара\n'
         '/search - Поиск товаров по названию\n'
-        '/photo - Вывод фотографий для текущего товара\n'
+        '/photo - Циклический вывод фотографий для текущего товара\n'
         '/help - Список комманд\n'
         '/about - О боте...\n'
     )
@@ -82,8 +82,8 @@ class ChinaBot:
         dp.addTelegramCommandHandler('search_sort_up', self.search_up)
         dp.addTelegramCommandHandler('search_sort_down', self.search_down)
         dp.addTelegramCommandHandler('search', self.search)
-        dp.addTelegramCommandHandler('photo', self.photo)
-        dp.addTelegramMessageHandler(self.do_search)
+        dp.addTelegramCommandHandler('photo', self.photog)
+        dp.addTelegramMessageHandler(self.command_filter)
         dp.addTelegramCommandHandler('random', self.random)
 
         dp.addUnknownTelegramCommandHandler(self.unknow)
@@ -147,8 +147,8 @@ class ChinaBot:
     def start(self, bot, update):
         self.logger_wrap(update.message, 'start')
         bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n' + Emoji.CLOUD.decode('utf-8') * 3 + u' [China-Vapes.ru](http://china-vapes.ru) ' + Emoji.CLOUD.decode('utf-8') * 3, parse_mode=ParseMode.MARKDOWN)
-        custom_keyboard = [['/TOP '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8'),'/random '+Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8')],
-                           ['/search '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),'/help '+Emoji.ORANGE_BOOK.decode('utf-8')]]
+        custom_keyboard = [['TOP '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8'),u'Наугад '+Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8')],
+                           [u'Поиск '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Помощь '+Emoji.ORANGE_BOOK.decode('utf-8')]]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
         bot.sendMessage(update.message.chat_id, text=self.help_text, reply_markup=reply_markup)
 
@@ -164,6 +164,35 @@ class ChinaBot:
         self.logger_wrap(update.message, 'search')
         bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию', parse_mode=ParseMode.MARKDOWN)
 
+    def command_filter(self, bot, update):
+        self.logger_wrap(update.message, 'command_filter')
+        if update.message.text == 'TOP '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8'):
+            self.top(bot, update)
+        elif update.message.text == u'Наугад ' + Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8') or update.message.text == u'Ещё разок ' + Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8'):
+            self.random(bot, update)
+        elif update.message.text == u'Поиск '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
+            self.search(bot, update)
+        elif update.message.text == u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8'):
+            self.help(bot, update)
+        elif update.message.text == Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий':
+            self.get_previous(bot, update)
+        elif update.message.text == u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8'):
+            self.get_next(bot, update)
+        elif update.message.text == Emoji.UPWARDS_BLACK_ARROW.decode('utf-8')+u' По возрастанию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+            self.search_up(bot, update)
+        elif update.message.text == Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')+u' По убыванию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+            self.search_down(bot, update)
+        elif update.message.text == Emoji.UPWARDS_BLACK_ARROW.decode('utf-8')+u' По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+            self.top_up(bot, update)
+        elif update.message.text == Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')+u' По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
+            self.top_down(bot, update)
+        elif update.message.text == u'Фотографии ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
+            self.photog(bot, update)
+        elif update.message.text == u'Закрыть ' + Emoji.CROSS_MARK.decode('utf-8'):
+            self.start(bot, update)
+        else:
+            self.do_search(bot, update)
+
     def do_search(self, bot, update):
         self.logger_wrap(update.message, 'do_search')
         self.search_query[str(update.message.chat_id)] = update.message.text
@@ -173,13 +202,13 @@ class ChinaBot:
     def give(self, bot, update, args):
         self.logger_wrap(update.message, 'give')
         if args in ['Search_Down','Search_Up']:
-            self.custom_keyboard = [['/previous '+Emoji.LEFT_RIGHT_ARROW.decode('utf-8'),'/next '+Emoji.LEFT_RIGHT_ARROW.decode('utf-8')],
-                                    ['/search_sort_up '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')+Emoji.UPWARDS_BLACK_ARROW.decode('utf-8'),'/search_sort_down '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')+Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')],
-                                    ['/photo '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),'/close '+Emoji.CROSS_MARK.decode('utf-8')]]
+            self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
+                                    [Emoji.UPWARDS_BLACK_ARROW.decode('utf-8')+u' По возрастанию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')+u' По убыванию  '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
+                                    [u'Фотографии '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
         else:
-            self.custom_keyboard = [['/previous '+Emoji.LEFT_RIGHT_ARROW.decode('utf-8'),'/next '+Emoji.LEFT_RIGHT_ARROW.decode('utf-8')],
-                                    ['/sort_up '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')+Emoji.UPWARDS_BLACK_ARROW.decode('utf-8'),'/sort_down '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')+Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')],
-                                    ['/photo '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),'/close '+Emoji.CROSS_MARK.decode('utf-8')]]
+            self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
+                                    [Emoji.UPWARDS_BLACK_ARROW.decode('utf-8')+u' По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),Emoji.DOWNWARDS_BLACK_ARROW.decode('utf-8')+u' По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
+                                    [u'Фотографии '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, args)
         self.count[str(update.message.chat_id)] = 0
@@ -196,7 +225,7 @@ class ChinaBot:
 
     def random(self, bot, update):
         self.logger_wrap(update.message, 'random')
-        self.custom_keyboard = [['/random '+Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8')],
+        self.custom_keyboard = [[u'Ещё разок '+Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8')],
                                 ['/photo '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),'/close '+Emoji.CROSS_MARK.decode('utf-8')]]
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, 'Random')
@@ -220,7 +249,7 @@ class ChinaBot:
         self.logger_wrap(update.message, 'search_up')
         self.give(bot, update, 'Search_Up')
 
-    def photo(self, bot, update):
+    def photog(self, bot, update):
         self.logger_wrap(update.message, 'photo')
         bot.sendChatAction(update.message.chat_id, action=telegram.ChatAction.TYPING)
         link = self.photo[str(update.message.chat_id)][str(self.count[str(update.message.chat_id)])]
