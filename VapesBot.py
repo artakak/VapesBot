@@ -4,9 +4,6 @@ from telegram.ext import Updater
 import logging
 import telegram
 import sys
-import re
-import requests
-import json
 from sqlalchemy_wrapper import SQLAlchemy
 import random
 

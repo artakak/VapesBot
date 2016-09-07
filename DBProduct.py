@@ -4,6 +4,18 @@ from sqlalchemy_wrapper import SQLAlchemy
 
 db = SQLAlchemy('sqlite:///Test.db')
 
+class Bitly:
+    def __init__(self, access_token):
+        self.access_token = access_token
+
+    def short_link(self, long_link):
+        url = 'https://api-ssl.bitly.com/v3/shorten?access_token=%s&longUrl=%s&format=json'\
+               % (self.access_token, long_link)
+        try:
+            return json.loads(requests.get(url).text.decode('utf8'))['data']['url']
+        except:
+            return long_link
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.String(20), unique=True)
@@ -40,7 +52,7 @@ def get_products_list():
         result = ('req3','req4')
         post_url_api = 'http://api.epn.bz/json'
         req_pull={'req1':{'action':'list_categories','lang':'en'},
-                  'req2':{'action':'offer_info','id':'32262991446','currency':'RUR','lang':'en'},
+                  'req2':{'action':'offer_info','id':'32611301612','currency':'RUR','lang':'en'},
                   'req3':{'action':'search','store':'335020,1247181','limit':'10000','currency':'RUR','lang':'en'},
                   'req4': {'action': 'search', 'store': '409690,1209066', 'limit': '10000','currency': 'RUR', 'lang': 'en'}
                   }
@@ -53,13 +65,16 @@ def get_products_list():
         #print (post_req.status_code)
         print (post_req.text)
         data = json.loads(post_req.text)
+        print (data['results']['req2'])
+        bt = Bitly('dabe0c299be0b139712a18f087c5deeb58c01713')
         for k in result:
             for product in data['results'][k]['offers']:
                 if 'pcs/lot' not in product['name'] and 'pcs' not in product['name'] and 'PCS' not in product['name']:
                     all_img = '|'.join(product['all_images'])
-                    db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['price'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
+                    db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['price'], product['store_id'], product['store_title'], bt.short_link(product['url']), product['orders_count'], product['evaluatescore']))
 
 #print (get_products_list())
+#http://alipromo.com/redirect/cpa/o/o04p5vpi8jh1dxow2dvci6et5ijzuho1/
 
 
 db.create_all()
