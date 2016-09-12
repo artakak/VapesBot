@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from telegram import Emoji, ParseMode
-from telegram.ext import Updater
-import logging
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import telegram
+import logging
 import sys
 from sqlalchemy_wrapper import SQLAlchemy
 import random
@@ -62,30 +62,30 @@ class ChinaBot:
 
     def __init__(self, telegram, botan):
         if botan:
-            from telegram.utils.botan import Botan
+            from telegram.contrib.botan import Botan
             self.botan = Botan(botan)
 
         self.updater = Updater(telegram)
         dp = self.updater.dispatcher
-        dp.addTelegramCommandHandler('start', self.start)
-        dp.addTelegramCommandHandler('close', self.start)
-        dp.addTelegramCommandHandler('previous', self.get_previous)
-        dp.addTelegramCommandHandler('next', self.get_next)
-        dp.addTelegramCommandHandler('help', self.help)
-        dp.addTelegramCommandHandler('about', self.about)
-        dp.addTelegramCommandHandler('TOP', self.top)
-        dp.addTelegramCommandHandler('sort_up', self.top_up)
-        dp.addTelegramCommandHandler('sort_down', self.top_down)
-        dp.addTelegramCommandHandler('search_sort_up', self.search_up)
-        dp.addTelegramCommandHandler('search_sort_down', self.search_down)
-        dp.addTelegramCommandHandler('search', self.search)
-        dp.addTelegramCommandHandler('photo', self.photog)
-        dp.addTelegramMessageHandler(self.command_filter)
-        dp.addTelegramCommandHandler('random', self.random)
+        dp.add_handler(CommandHandler('start', self.start))
+        dp.add_handler(CommandHandler('close', self.start))
+        dp.add_handler(CommandHandler('previous', self.get_previous))
+        dp.add_handler(CommandHandler('next', self.get_next))
+        dp.add_handler(CommandHandler('help', self.help))
+        dp.add_handler(CommandHandler('about', self.about))
+        dp.add_handler(CommandHandler('TOP', self.top))
+        dp.add_handler(CommandHandler('sort_up', self.top_up))
+        dp.add_handler(CommandHandler('sort_down', self.top_down))
+        dp.add_handler(CommandHandler('search_sort_up', self.search_up))
+        dp.add_handler(CommandHandler('search_sort_down', self.search_down))
+        dp.add_handler(CommandHandler('search', self.search))
+        dp.add_handler(CommandHandler('photo', self.photog))
+        dp.add_handler(MessageHandler([Filters.text], self.command_filter))
+        dp.add_handler(CommandHandler('random', self.random))
 
-        dp.addUnknownTelegramCommandHandler(self.unknow)
+        #dp.addUnknownTelegramCommandHandler(self.unknow)
 
-        dp.addErrorHandler(self.error)
+        #dp.addErrorHandler(self.error)
         self.result = {}
         self.count = {}
         self.photo = {}
@@ -307,10 +307,10 @@ class ChinaBot:
 
 def main():
     try:
-        #bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
-        #botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
-        bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
-        botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
+        bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
+        botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
+        #bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
+        #botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
 
     except Exception as e:
         logger.exception(e)
