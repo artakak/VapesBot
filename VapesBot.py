@@ -147,19 +147,18 @@ class ChinaBot:
     def good_view(self, bot, update, products, args):
         final = None
         if args != 'Search_Inline':
+            k = 0
+            self.photo[str(update.message.chat_id)] = {}
+            for product in products:
+                self.photo[str(update.message.chat_id)][str(k)] = []
+                # self.photo[str(k)].append(product.product_picture)
+                self.photo[str(update.message.chat_id)][str(k)] = product.product_other_picture.split('|')
+                k += 1
             final = [u'*Наименование*: '+product.product_name+'\n'
                      u'*Магазин*: '+product.product_store_title+'\n'
                      u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
                      u'*Цена*: '+str(product.product_price)+u' РУБ\n'
                      u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
-
-            k = 0
-            self.photo[str(update.message.chat_id)] = {}
-            for product in products:
-                self.photo[str(update.message.chat_id)][str(k)] = []
-                #self.photo[str(k)].append(product.product_picture)
-                self.photo[str(update.message.chat_id)][str(k)] = product.product_other_picture.split('|')
-                k += 1
         else:
             final = [u'*Наименование*: ' + products.product_name + '\n'
                      u'*Магазин*: ' + products.product_store_title + '\n'
@@ -316,7 +315,8 @@ class ChinaBot:
 
     def test(self, bot, update):
         query = update.callback_query
-        if query.data == '1': return
+        idq = query.message.message_id
+        if query.data == '1' or idq != self.id + 1: return
         if query.data == 'PreviousP':
             self.photo_count -= 2
         bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -343,6 +343,7 @@ class ChinaBot:
         link = self.photo[str(update.message.chat_id)][str(self.count[str(update.message.chat_id)])]
         keyboard = self.do_keybord(self.photo_count, len(link))
         bot.sendMessage(update.message.chat_id, text=u'['+Emoji.CLOUD.decode('utf-8')+']('+str(link[self.photo_count])+')', reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
+        self.id = update.message.message_id
         self.photo_count += 1
 
     def get_next(self, bot, update):
