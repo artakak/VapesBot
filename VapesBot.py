@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-from telegram import Emoji, ParseMode
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import Emoji, ParseMode, InlineQueryResultArticle, InputTextMessageContent
+from telegram.ext import Updater, CommandHandler, MessageHandler, InlineQueryHandler, Filters, CallbackQueryHandler
 import telegram
 import logging
+import time
 import sys
+import re
+import json
 from sqlalchemy_wrapper import SQLAlchemy
 import random
+
 
 db = SQLAlchemy('sqlite:///Test.db')
 
@@ -54,7 +58,7 @@ class ChinaBot:
         'Функционал:\n'
         '/TOP - Подборка товаров с наивысшим рейтингом\n'
         '/random - Показ случайного товара\n'
-        '/search - Поиск товаров по названию\n'
+        '/find - Поиск товаров по названию\n'
         '/photo - Вывод фотографий для текущего товара\n'
         '/help - Список комманд\n'
         '/about - О боте...\n'
@@ -74,16 +78,20 @@ class ChinaBot:
         dp.add_handler(CommandHandler('help', self.help))
         dp.add_handler(CommandHandler('about', self.about))
         dp.add_handler(CommandHandler('TOP', self.top))
+        #dp.add_handler(CommandHandler('ID', self.id))
         dp.add_handler(CommandHandler('sort_up', self.top_up))
         dp.add_handler(CommandHandler('sort_down', self.top_down))
         dp.add_handler(CommandHandler('search_sort_up', self.search_up))
         dp.add_handler(CommandHandler('search_sort_down', self.search_down))
-        dp.add_handler(CommandHandler('search', self.search))
+        dp.add_handler(CommandHandler('find', self.search, pass_args=True))
         dp.add_handler(CommandHandler('photo', self.photog))
-        dp.add_handler(MessageHandler([Filters.text], self.command_filter))
         dp.add_handler(CommandHandler('random', self.random))
+        dp.add_handler(CallbackQueryHandler(self.test))
 
-        #dp.addUnknownTelegramCommandHandler(self.unknow)
+        dp.add_handler(InlineQueryHandler(self.inline_search))
+
+        dp.add_handler(MessageHandler([Filters.text], self.command_filter))
+        dp.add_handler(MessageHandler([Filters.command], self.unknow))
 
         #dp.addErrorHandler(self.error)
         self.result = {}
@@ -105,6 +113,7 @@ class ChinaBot:
                                             user.last_name))
 
     def product_wrap(self, bot, update, args):
+        products = None
         try:
             if args == 'TOP_Up':
                 products = db.query(Product).filter_by(score=5).order_by(Product.product_price).all()
@@ -114,36 +123,55 @@ class ChinaBot:
                 count = db.query(Product).count()
                 products = db.query(Product).filter_by(id=random.randint(1, count)).limit(10).all()
             elif args == 'Search_Down':
-                string = str(self.search_query[str(update.message.chat_id)])
-                products = db.query(Product).filter(Product.product_name.contains("%"+string+"%")).order_by(Product.product_price.desc()).all()
+                string = ''
+                for k in self.search_query[str(update.message.chat_id)]:
+                    string += k+' '
+                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price.desc()).all()
             elif args == 'Search_Up':
                 string = str(self.search_query[str(update.message.chat_id)])
                 products = db.query(Product).filter(Product.product_name.contains("%"+string+"%")).order_by(Product.product_price).all()
-
+            elif args == 'Search_Inline':
+                string = str(update.inline_query.query)
+                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price).all()
+            elif args == 'ID':
+                string = str(self.search_query[str(update.message.chat_id)])
+                products = db.query(Product).filter(Product.product_id == string)
 
         except Exception as e:
             logger.exception(e)
+        if args != 'Search_Inline' and products:
+            return self.good_view(bot, update, products, args=None)
+        else:
+            return products
 
-        #print(products)
-        final = [u'*Наименование*: '+product.product_name+'\n'
-                 u'*Магазин*: '+product.product_store_title+'\n'
-                 u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
-                 u'*Цена*: '+str(product.product_price)+u' РУБ\n'
-                 u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
-        k = 0
-        self.photo[str(update.message.chat_id)] = {}
-        for product in products:
-            self.photo[str(update.message.chat_id)][str(k)] = []
-            #self.photo[str(k)].append(product.product_picture)
-            self.photo[str(update.message.chat_id)][str(k)] = product.product_other_picture.split('|')
-            k+=1
+    def good_view(self, bot, update, products, args):
+        final = None
+        if args != 'Search_Inline':
+            final = [u'*Наименование*: '+product.product_name+'\n'
+                     u'*Магазин*: '+product.product_store_title+'\n'
+                     u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
+                     u'*Цена*: '+str(product.product_price)+u' РУБ\n'
+                     u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
 
+            k = 0
+            self.photo[str(update.message.chat_id)] = {}
+            for product in products:
+                self.photo[str(update.message.chat_id)][str(k)] = []
+                #self.photo[str(k)].append(product.product_picture)
+                self.photo[str(update.message.chat_id)][str(k)] = product.product_other_picture.split('|')
+                k += 1
+        else:
+            final = [u'*Наименование*: ' + products.product_name + '\n'
+                     u'*Магазин*: ' + products.product_store_title + '\n'
+                     u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                     u'*Цена*: ' + str(products.product_price) + u' РУБ\n'
+                     u'[ЗАКАЗАТЬ]' + '(' + products.partner_url + ')\n']
         return final
-
 
     def start(self, bot, update):
         self.logger_wrap(update.message, 'start')
-        bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n' + Emoji.CLOUD.decode('utf-8') * 3 + u' [China-Vapes.ru](http://china-vapes.ru) ' + Emoji.CLOUD.decode('utf-8') * 3, parse_mode=ParseMode.MARKDOWN)
+        bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n' + Emoji.CLOUD.decode('utf-8') * 3 + u' [China-Vapes.ru](http://china-vapes.ru) ' + Emoji.CLOUD.decode('utf-8') * 3,
+                        parse_mode=ParseMode.MARKDOWN)
         custom_keyboard = [['TOP '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8'),u'Наугад '+Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8')],
                            [u'Поиск '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Помощь '+Emoji.ORANGE_BOOK.decode('utf-8')]]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
@@ -157,9 +185,33 @@ class ChinaBot:
         self.logger_wrap(update.message, 'about')
         bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n'+Emoji.CLOUD.decode('utf-8')*3+u' [China-Vapes.ru](http://china-vapes.ru) '+Emoji.CLOUD.decode('utf-8')*3, parse_mode=ParseMode.MARKDOWN)
 
-    def search(self, bot, update):
+    def search(self, bot, update, args):
         self.logger_wrap(update.message, 'search')
-        bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию', parse_mode=ParseMode.MARKDOWN)
+        if args:
+            self.search_query[str(update.message.chat_id)] = args
+            self.give(bot, update, 'Search_Down')
+        else:
+            bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию, используя комманду "/find",\
+                                                          также, Вы можете использовать строковый поиск через @ChinaVapesBot', parse_mode=ParseMode.MARKDOWN)
+            id = update.message.message_id
+            bot.editMessageText(text='BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', chat_id=update.message.chat_id, message_id=int(id)-1)
+
+    def inline_search(self, bot, update):
+        if update.inline_query:
+            user = update.inline_query.from_user
+            query = update.inline_query.query
+            results = list()
+            if query:
+                logger.info('Inline: %s from %s @%s %s' % (query, user.first_name, user.username, user.last_name))
+                products = self.product_wrap(bot, update, "Search_Inline")
+                if products:
+                    k = 0
+                    for product in products:
+                        if k < 50:
+                            results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name, description=Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+u'  '+Emoji.BANKNOTE_WITH_DOLLAR_SIGN.decode('utf-8')+u'  '+str(product.product_price)+u' РУБ', thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),parse_mode=ParseMode.MARKDOWN)))
+                            k +=1
+                        else: break
+        bot.answerInlineQuery(update.inline_query.id, results)
 
     def command_filter(self, bot, update):
         self.logger_wrap(update.message, 'command_filter')
@@ -168,7 +220,7 @@ class ChinaBot:
         elif update.message.text == u'Наугад ' + Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8') or update.message.text == u'Ещё разок ' + Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8'):
             self.random(bot, update)
         elif update.message.text == u'Поиск '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
-            self.search(bot, update)
+            self.search(bot, update, args=None)
         elif update.message.text == u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8'):
             self.help(bot, update)
         elif update.message.text == Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий':
@@ -187,8 +239,8 @@ class ChinaBot:
             self.photog(bot, update)
         elif update.message.text == u'Закрыть ' + Emoji.CROSS_MARK.decode('utf-8'):
             self.start(bot, update)
-        else:
-            self.do_search(bot, update)
+        #else:
+            #self.do_search(bot, update)
 
     def do_search(self, bot, update):
         self.logger_wrap(update.message, 'do_search')
@@ -202,6 +254,9 @@ class ChinaBot:
             self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
                                     [u'По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u'По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
                                     [u'Фотографии '+Emoji.CAMERA.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
+
+        elif args == 'ID':
+            self.custom_keyboard = [[u'Фотографии ' + Emoji.CAMERA.decode('utf-8'),u'Закрыть ' + Emoji.CROSS_MARK.decode('utf-8')]]
         else:
             self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
                                     [u'Пo возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u'Пo убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
@@ -213,8 +268,13 @@ class ChinaBot:
         try:
             bot.sendMessage(update.message.chat_id, text=u'1 ИЗ %s\n' % (str(len(self.result[str(update.message.chat_id)])))+self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
         except:
-            bot.sendMessage(update.message.chat_id, text=u'Извините, мне нечего Вам показать '+Emoji.CONFUSED_FACE.decode('utf-8'), parse_mode=ParseMode.MARKDOWN)
+            bot.sendMessage(update.message.chat_id, text=u'Извините, мне нечего Вам показать '+Emoji.CONFUSED_FACE.decode('utf-8'),
+                                                    parse_mode=ParseMode.MARKDOWN)
 
+    def id(self, bot, update):
+        self.logger_wrap(update.message, 'ID')
+        self.search_query[str(update.message.chat_id)] = re.findall('\d+', update.message.text)[0]
+        self.give(bot, update, 'ID')
 
     def top(self, bot, update):
         self.logger_wrap(update.message, 'top')
@@ -228,7 +288,9 @@ class ChinaBot:
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, 'Random')
         self.count[str(update.message.chat_id)] = 0
         self.photo_count = 0
-        bot.sendMessage(update.message.chat_id, text=self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
+        bot.sendMessage(update.message.chat_id, text=self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]],
+                        parse_mode=ParseMode.MARKDOWN,
+                        reply_markup=self.reply_markup)
 
     def top_down(self, bot, update):
         self.logger_wrap(update.message, 'top_down')
@@ -246,20 +308,42 @@ class ChinaBot:
         self.logger_wrap(update.message, 'search_up')
         self.give(bot, update, 'Search_Up')
 
-    def photog(self, bot, update):
-        self.logger_wrap(update.message, 'photo')
-        bot.sendChatAction(update.message.chat_id, action=telegram.ChatAction.TYPING)
-        link = self.photo[str(update.message.chat_id)][str(self.count[str(update.message.chat_id)])]
-        if self.photo_count+1 <= len(link):
-            bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.photo_count+1), str(len(link))), parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
-            bot.sendPhoto(update.message.chat_id, photo=str(link[self.photo_count]))
+    def do_keybord(self, current, total):
+        keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP'),
+                                                   telegram.InlineKeyboardButton(text=str(current + 1) + u' из ' + str(total), callback_data='1'),
+                                                   telegram.InlineKeyboardButton(text='>', callback_data='NextP')]])
+        return keyboard
+
+    def test(self, bot, update):
+        query = update.callback_query
+        if query.data == '1': return
+        if query.data == 'PreviousP':
+            self.photo_count -= 2
+        bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
+        link = self.photo[str(query.message.chat_id)][str(self.count[str(query.message.chat_id)])]
+        if 0 < self.photo_count + 1 <= len(link):
+            keyboard = self.do_keybord(self.photo_count,len(link))
+            bot.editMessageText(text=u'['+Emoji.CLOUD.decode('utf-8')+']('+str(link[self.photo_count])+')',
+                                chat_id=query.message.chat_id, message_id=query.message.message_id, parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             self.photo_count +=1
         else:
             self.photo_count = 0
-            bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.photo_count+1), str(len(link))), parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
-            bot.sendPhoto(update.message.chat_id, photo=str(link[self.photo_count]))
-            self.photo_count +=1
+            keyboard = self.do_keybord(self.photo_count, len(link))
+            try:
+                bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count]) + ')',
+                                    chat_id=query.message.chat_id, message_id=query.message.message_id,
+                                    parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+            except: pass
+            finally: self.photo_count += 1
 
+    def photog(self, bot, update):
+        self.logger_wrap(update.message, 'photo')
+        self.photo_count = 0
+        bot.sendChatAction(update.message.chat_id, action=telegram.ChatAction.TYPING)
+        link = self.photo[str(update.message.chat_id)][str(self.count[str(update.message.chat_id)])]
+        keyboard = self.do_keybord(self.photo_count, len(link))
+        bot.sendMessage(update.message.chat_id, text=u'['+Emoji.CLOUD.decode('utf-8')+']('+str(link[self.photo_count])+')', reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
+        self.photo_count += 1
 
     def get_next(self, bot, update):
         self.logger_wrap(update.message, 'next')
