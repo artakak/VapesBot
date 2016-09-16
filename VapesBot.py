@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from telegram import Emoji, ParseMode, InlineQueryResultArticle, InputTextMessageContent
-from telegram.ext import Updater, CommandHandler, MessageHandler, InlineQueryHandler, Filters, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, InlineQueryHandler, Filters, CallbackQueryHandler, ChosenInlineResultHandler
 import telegram
 import logging
 import time
@@ -86,9 +86,10 @@ class ChinaBot:
         dp.add_handler(CommandHandler('find', self.search, pass_args=True))
         dp.add_handler(CommandHandler('photo', self.photog))
         dp.add_handler(CommandHandler('random', self.random))
-        dp.add_handler(CallbackQueryHandler(self.test))
+        dp.add_handler(CallbackQueryHandler(self.filter_for_inline))
 
         dp.add_handler(InlineQueryHandler(self.inline_search))
+        dp.add_handler(ChosenInlineResultHandler(self.test))
 
         dp.add_handler(MessageHandler([Filters.text], self.command_filter))
         dp.add_handler(MessageHandler([Filters.command], self.unknow))
@@ -200,6 +201,7 @@ class ChinaBot:
             user = update.inline_query.from_user
             query = update.inline_query.query
             results = list()
+            keyboard = self.do_keybord(1, 5, 'do_picture')
             if query:
                 logger.info('Inline: %s from %s @%s %s' % (query, user.first_name, user.username, user.last_name))
                 products = self.product_wrap(bot, update, "Search_Inline")
@@ -207,7 +209,11 @@ class ChinaBot:
                     k = 0
                     for product in products:
                         if k < 50:
-                            results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name, description=Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+u'  '+Emoji.BANKNOTE_WITH_DOLLAR_SIGN.decode('utf-8')+u'  '+str(product.product_price)+u' РУБ', thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),parse_mode=ParseMode.MARKDOWN)))
+                            print str(product.product_id)
+                            results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
+                                                                    description=Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+u'  '+Emoji.BANKNOTE_WITH_DOLLAR_SIGN.decode('utf-8')+u'  '+str(product.product_price)+u' РУБ',
+                                                                    thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
+                                                                    parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
                             k +=1
                         else: break
         bot.answerInlineQuery(update.inline_query.id, results)
@@ -307,28 +313,47 @@ class ChinaBot:
         self.logger_wrap(update.message, 'search_up')
         self.give(bot, update, 'Search_Up')
 
-    def do_keybord(self, current, total):
-        keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP'),
-                                                   telegram.InlineKeyboardButton(text=str(current + 1) + u' из ' + str(total), callback_data='1'),
-                                                   telegram.InlineKeyboardButton(text='>', callback_data='NextP')]])
+    def do_keybord(self, current, total, flag):
+        if flag == 'picture_slide':
+            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP'),
+                                                       telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
+                                                       telegram.InlineKeyboardButton(text='>', callback_data='NextP')]])
+        elif flag == 'do_picture':
+            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'Фотографии', callback_data='Do_photo')]])
         return keyboard
 
     def test(self, bot, update):
+        self.result = update.chosen_inline_result.result_id
+        message = update.chosen_inline_result.inline_message_id
+        self.user = update.chosen_inline_result.from_user
+        self.query = update.chosen_inline_result.query
+        k = telegram.ChosenInlineResult(result_id=self.result, from_user=self.user, query=self.query)
+        print k
+
+    def filter_for_inline(self, bot, update):
+        query = update.callback_query
+        if query.data == 'PreviousP' or query.data == 'NextP':
+            self.slide_in_chat(bot, update)
+        if query.data == 'Do_photo':
+            keybord = self.do_keybord(1,5, 'picture_slide')
+            bot.editMessageReplyMarkup(inline_message_id=query.inline_message_id, reply_markup=keybord)
+
+    def slide_in_chat(self, bot, update):
         query = update.callback_query
         idq = query.message.message_id
-        if query.data == '1' or idq != self.id + 1: return
+        if idq != self.id + 1: return
         if query.data == 'PreviousP':
             self.photo_count -= 2
         bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
         link = self.photo[str(query.message.chat_id)][str(self.count[str(query.message.chat_id)])]
         if 0 < self.photo_count + 1 <= len(link):
-            keyboard = self.do_keybord(self.photo_count,len(link))
+            keyboard = self.do_keybord(self.photo_count,len(link), 'picture_slide')
             bot.editMessageText(text=u'['+Emoji.CLOUD.decode('utf-8')+']('+str(link[self.photo_count])+')',
                                 chat_id=query.message.chat_id, message_id=query.message.message_id, parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             self.photo_count +=1
         else:
             self.photo_count = 0
-            keyboard = self.do_keybord(self.photo_count, len(link))
+            keyboard = self.do_keybord(self.photo_count, len(link), 'picture_slide')
             try:
                 bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count]) + ')',
                                     chat_id=query.message.chat_id, message_id=query.message.message_id,
@@ -341,7 +366,7 @@ class ChinaBot:
         self.photo_count = 0
         bot.sendChatAction(update.message.chat_id, action=telegram.ChatAction.TYPING)
         link = self.photo[str(update.message.chat_id)][str(self.count[str(update.message.chat_id)])]
-        keyboard = self.do_keybord(self.photo_count, len(link))
+        keyboard = self.do_keybord(self.photo_count, len(link), 'picture_slide')
         bot.sendMessage(update.message.chat_id, text=u'['+Emoji.CLOUD.decode('utf-8')+']('+str(link[self.photo_count])+')', reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
         self.id = update.message.message_id
         self.photo_count += 1
