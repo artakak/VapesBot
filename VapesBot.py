@@ -21,6 +21,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.String(20), unique=True)
@@ -34,7 +35,6 @@ class Product(db.Model):
     partner_url = db.Column(db.String(200), unique=False)
     orders_count = db.Column(db.Integer, unique=False)
     score = db.Column(db.Integer, unique=False)
-
 
     def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_price, product_store_id, product_store_title, partner_url, orders_count, score):
         self.product_id = product_id
@@ -51,6 +51,7 @@ class Product(db.Model):
 
     def __repr__(self):
         return '<Product %r, %r>' % (self.product_id, self.product_name)
+
 
 class ChinaBot:
 
@@ -83,13 +84,13 @@ class ChinaBot:
         dp.add_handler(CommandHandler('sort_down', self.top_down))
         dp.add_handler(CommandHandler('search_sort_up', self.search_up))
         dp.add_handler(CommandHandler('search_sort_down', self.search_down))
-        dp.add_handler(CommandHandler('find', self.search, pass_args=True))
+        dp.add_handler(CommandHandler('find', self.search))
         dp.add_handler(CommandHandler('photo', self.photog))
         dp.add_handler(CommandHandler('random', self.random))
         dp.add_handler(CallbackQueryHandler(self.filter_for_inline))
 
         dp.add_handler(InlineQueryHandler(self.inline_search))
-        dp.add_handler(ChosenInlineResultHandler(self.test))
+        dp.add_handler(ChosenInlineResultHandler(self.inline_picture))
 
         dp.add_handler(MessageHandler([Filters.text], self.command_filter))
         dp.add_handler(MessageHandler([Filters.command], self.unknow))
@@ -98,6 +99,7 @@ class ChinaBot:
         self.result = {}
         self.count = {}
         self.photo = {}
+        self.answer = {}
         self.photo_count = {}
         self.search_query = {}
 
@@ -124,9 +126,7 @@ class ChinaBot:
                 count = db.query(Product).count()
                 products = db.query(Product).filter_by(id=random.randint(1, count)).limit(10).all()
             elif args == 'Search_Down':
-                string = ''
-                for k in self.search_query[str(update.message.chat_id)]:
-                    string += k+' '
+                string = str(self.search_query[str(update.message.chat_id)])
                 products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price.desc()).all()
             elif args == 'Search_Up':
                 string = str(self.search_query[str(update.message.chat_id)])
@@ -135,19 +135,36 @@ class ChinaBot:
                 string = str(update.inline_query.query)
                 products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price).all()
             elif args == 'ID':
-                string = str(self.search_query[str(update.message.chat_id)])
-                products = db.query(Product).filter(Product.product_id == string)
+                try: string = str(update.chosen_inline_result.result_id)
+                except: string = self.answer[str(update.callback_query.inline_message_id)]
+                products = db.query(Product).filter(Product.product_id == int(string))
 
         except Exception as e:
             logger.exception(e)
-        if args != 'Search_Inline' and products:
-            return self.good_view(bot, update, products, args=None)
-        else:
+        if args == 'Search_Inline' and products:
             return products
+        elif args == 'ID' and products:
+            return self.good_view(bot, update, products, args)
+        else:
+            return self.good_view(bot, update, products, args=None)
 
     def good_view(self, bot, update, products, args):
         final = None
-        if args != 'Search_Inline':
+        if args == 'Search_Inline':
+            final = [u'*Наименование*: ' + products.product_name + '\n'
+                     u'*Магазин*: ' + products.product_store_title + '\n'
+                     u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                     u'*Цена*: ' + str(products.product_price) + u' РУБ\n'
+                     u'[ЗАКАЗАТЬ]' + '(' + products.partner_url + ')\n']
+        elif args == 'ID':
+            final = [u'*Наименование*: ' + products[0].product_name + '\n'
+                     u'*Магазин*: ' + products[0].product_store_title + '\n'
+                     u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products[0].score) + '\n'
+                     u'*Цена*: ' + str(products[0].product_price) + u' РУБ\n'
+                     u'[ЗАКАЗАТЬ]' + '(' + products[0].partner_url + ')\n']
+            self.photo[str(products[0].product_id)] = products[0].product_other_picture.split('|')
+            return final
+        else:
             k = 0
             self.photo[str(update.message.chat_id)] = {}
             for product in products:
@@ -160,12 +177,6 @@ class ChinaBot:
                      u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
                      u'*Цена*: '+str(product.product_price)+u' РУБ\n'
                      u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
-        else:
-            final = [u'*Наименование*: ' + products.product_name + '\n'
-                     u'*Магазин*: ' + products.product_store_title + '\n'
-                     u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
-                     u'*Цена*: ' + str(products.product_price) + u' РУБ\n'
-                     u'[ЗАКАЗАТЬ]' + '(' + products.partner_url + ')\n']
         return final
 
     def start(self, bot, update):
@@ -185,23 +196,16 @@ class ChinaBot:
         self.logger_wrap(update.message, 'about')
         bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n'+Emoji.CLOUD.decode('utf-8')*3+u' [China-Vapes.ru](http://china-vapes.ru) '+Emoji.CLOUD.decode('utf-8')*3, parse_mode=ParseMode.MARKDOWN)
 
-    def search(self, bot, update, args):
+    def search(self, bot, update):
         self.logger_wrap(update.message, 'search')
-        if args:
-            self.search_query[str(update.message.chat_id)] = args
-            self.give(bot, update, 'Search_Down')
-        else:
-            bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию, используя комманду "/find",\
-                                                          также, Вы можете использовать строковый поиск через @ChinaVapesBot', parse_mode=ParseMode.MARKDOWN)
-            id = update.message.message_id
-            bot.editMessageText(text='BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', chat_id=update.message.chat_id, message_id=int(id)-1)
+        bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию, также, Вы можете использовать встроенный механизм поиска в любом чате, обратившись к боту через @ChinaVapesBot', parse_mode=ParseMode.MARKDOWN)
 
     def inline_search(self, bot, update):
         if update.inline_query:
             user = update.inline_query.from_user
             query = update.inline_query.query
             results = list()
-            keyboard = self.do_keybord(1, 5, 'do_picture')
+            keyboard = self.do_keybord(1, 5, 'do_picture_inline')
             if query:
                 logger.info('Inline: %s from %s @%s %s' % (query, user.first_name, user.username, user.last_name))
                 products = self.product_wrap(bot, update, "Search_Inline")
@@ -225,7 +229,7 @@ class ChinaBot:
         elif update.message.text == u'Наугад ' + Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8') or update.message.text == u'Ещё разок ' + Emoji.BLACK_QUESTION_MARK_ORNAMENT.decode('utf-8'):
             self.random(bot, update)
         elif update.message.text == u'Поиск '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
-            self.search(bot, update, args=None)
+            self.search(bot, update)
         elif update.message.text == u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8'):
             self.help(bot, update)
         elif update.message.text == Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий':
@@ -244,8 +248,8 @@ class ChinaBot:
             self.photog(bot, update)
         elif update.message.text == u'Закрыть ' + Emoji.CROSS_MARK.decode('utf-8'):
             self.start(bot, update)
-        #else:
-            #self.do_search(bot, update)
+        elif len(update.message.text) < 50:
+            self.do_search(bot, update)
 
     def do_search(self, bot, update):
         self.logger_wrap(update.message, 'do_search')
@@ -318,25 +322,78 @@ class ChinaBot:
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP'),
                                                        telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
                                                        telegram.InlineKeyboardButton(text='>', callback_data='NextP')]])
-        elif flag == 'do_picture':
+        elif flag == 'do_picture_inline':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'Фотографии', callback_data='Do_photo')]])
+
+        elif flag == 'picture_slide_inline':
+            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP_in'),
+                                                       telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
+                                                       telegram.InlineKeyboardButton(text='>', callback_data='NextP_in'),
+                                                       telegram.InlineKeyboardButton(text='X', callback_data='X')]])
         return keyboard
 
-    def test(self, bot, update):
-        self.result = update.chosen_inline_result.result_id
+    def inline_picture(self, bot, update):
+        result = update.chosen_inline_result.result_id
         message = update.chosen_inline_result.inline_message_id
         self.user = update.chosen_inline_result.from_user
         self.query = update.chosen_inline_result.query
-        k = telegram.ChosenInlineResult(result_id=self.result, from_user=self.user, query=self.query)
-        print k
+        k = telegram.ChosenInlineResult(result_id=result, from_user=self.user, query=self.query)
+        self.answer[str(message)] = str(update.chosen_inline_result.result_id)
+        try: self.photo[result]
+        except: self.product_wrap(bot, update, 'ID')
+        #print result
+        #print k
+        #print picture
 
     def filter_for_inline(self, bot, update):
         query = update.callback_query
-        if query.data == 'PreviousP' or query.data == 'NextP':
+        if query.data in ['PreviousP', 'NextP']:
             self.slide_in_chat(bot, update)
+        if query.data in ['PreviousP_in', 'NextP_in']:
+            self.slide_in_inline(bot, update)
         if query.data == 'Do_photo':
-            keybord = self.do_keybord(1,5, 'picture_slide')
-            bot.editMessageReplyMarkup(inline_message_id=query.inline_message_id, reply_markup=keybord)
+            id = self.answer[query.inline_message_id]
+            self.photo_count = 0
+            link = self.photo[id]
+            keyboard = self.do_keybord(self.photo_count, len(self.photo[id]), 'picture_slide_inline')
+            bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count]) + ')',
+                                inline_message_id=query.inline_message_id,
+                                parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+            self.photo_count += 1
+            #bot.editMessageReplyMarkup(inline_message_id=query.inline_message_id, reply_markup=keyboard)
+        if query.data == 'X':
+            id = self.answer[query.inline_message_id]
+            self.photo_count = 0
+            keyboard = self.do_keybord(1, 5, 'do_picture_inline')
+            product = self.product_wrap(bot, update, "ID")
+            bot.editMessageText(text=u''.join(product[0]),
+                                inline_message_id=query.inline_message_id,
+                                parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+
+    def slide_in_inline(self, bot, update):
+        query = update.callback_query
+        id = self.answer[query.inline_message_id]
+        if query.data == 'PreviousP_in':
+            self.photo_count -= 2
+        #bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
+        link = self.photo[id]
+        if 0 < self.photo_count + 1 <= len(link):
+            keyboard = self.do_keybord(self.photo_count, len(link), 'picture_slide_inline')
+            bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count]) + ')',
+                                inline_message_id=query.inline_message_id,
+                                parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+            self.photo_count += 1
+        else:
+            self.photo_count = 0
+            keyboard = self.do_keybord(self.photo_count, len(link), 'picture_slide_inline')
+            try:
+                bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count]) + ')',
+                                    inline_message_id=query.inline_message_id,
+                                    parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+            except:
+                pass
+            finally:
+                self.photo_count += 1
 
     def slide_in_chat(self, bot, update):
         query = update.callback_query
