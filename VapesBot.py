@@ -60,7 +60,6 @@ class ChinaBot:
         '/TOP - Подборка товаров с наивысшим рейтингом\n'
         '/random - Показ случайного товара\n'
         '/find - Поиск товаров по названию\n'
-        '/photo - Вывод фотографий для текущего товара\n'
         '/help - Список комманд\n'
         '/about - О боте...\n'
     )
@@ -84,15 +83,14 @@ class ChinaBot:
         dp.add_handler(CommandHandler('search_sort_up', self.search_up))
         dp.add_handler(CommandHandler('search_sort_down', self.search_down))
         dp.add_handler(CommandHandler('find', self.search))
-        dp.add_handler(CommandHandler('photo', self.photog))
         dp.add_handler(CommandHandler('random', self.random))
         dp.add_handler(CallbackQueryHandler(self.filter_for_inline))
         dp.add_handler(InlineQueryHandler(self.inline_search))
         dp.add_handler(ChosenInlineResultHandler(self.inline_picture))
         dp.add_handler(MessageHandler([Filters.text], self.command_filter))
         dp.add_handler(MessageHandler([Filters.command], self.unknow))
-
         #dp.addErrorHandler(self.error)
+
         self.result = {}
         self.count = {}
         self.photo_count = {}
