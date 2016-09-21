@@ -79,7 +79,6 @@ class ChinaBot:
         dp.add_handler(CommandHandler('help', self.help))
         dp.add_handler(CommandHandler('about', self.about))
         dp.add_handler(CommandHandler('TOP', self.top))
-        #dp.add_handler(CommandHandler('ID', self.id))
         dp.add_handler(CommandHandler('sort_up', self.top_up))
         dp.add_handler(CommandHandler('sort_down', self.top_down))
         dp.add_handler(CommandHandler('search_sort_up', self.search_up))
@@ -88,10 +87,8 @@ class ChinaBot:
         dp.add_handler(CommandHandler('photo', self.photog))
         dp.add_handler(CommandHandler('random', self.random))
         dp.add_handler(CallbackQueryHandler(self.filter_for_inline))
-
         dp.add_handler(InlineQueryHandler(self.inline_search))
         dp.add_handler(ChosenInlineResultHandler(self.inline_picture))
-
         dp.add_handler(MessageHandler([Filters.text], self.command_filter))
         dp.add_handler(MessageHandler([Filters.command], self.unknow))
 
@@ -256,16 +253,12 @@ class ChinaBot:
         self.search_query[str(update.message.chat_id)] = update.message.text
         self.give(bot,update, 'Search_Down')
 
-
     def give(self, bot, update, args):
         self.logger_wrap(update.message, 'give')
         if args in ['Search_Down','Search_Up']:
             self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
                                     [u'По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u'По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
                                     [u'Фотографии '+Emoji.CAMERA.decode('utf-8'),u'Закрыть '+Emoji.CROSS_MARK.decode('utf-8')]]
-
-        elif args == 'ID':
-            self.custom_keyboard = [[u'Фотографии ' + Emoji.CAMERA.decode('utf-8'),u'Закрыть ' + Emoji.CROSS_MARK.decode('utf-8')]]
         else:
             self.custom_keyboard = [[Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий',u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8')],
                                     [u'Пo возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'),u'Пo убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8')],
@@ -273,17 +266,11 @@ class ChinaBot:
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, args)
         self.count[str(update.message.chat_id)] = 0
-        photo_count = 0
         try:
             bot.sendMessage(update.message.chat_id, text=u'1 ИЗ %s\n' % (str(len(self.result[str(update.message.chat_id)])))+self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
         except:
             bot.sendMessage(update.message.chat_id, text=u'Извините, мне нечего Вам показать '+Emoji.CONFUSED_FACE.decode('utf-8'),
                                                     parse_mode=ParseMode.MARKDOWN)
-
-    def id(self, bot, update):
-        self.logger_wrap(update.message, 'ID')
-        self.search_query[str(update.message.chat_id)] = re.findall('\d+', update.message.text)[0]
-        self.give(bot, update, 'ID')
 
     def top(self, bot, update):
         self.logger_wrap(update.message, 'top')
@@ -296,7 +283,6 @@ class ChinaBot:
         self.reply_markup = telegram.ReplyKeyboardMarkup(self.custom_keyboard, resize_keyboard=True)
         self.result[str(update.message.chat_id)] = self.product_wrap(bot, update, 'Random')
         self.count[str(update.message.chat_id)] = 0
-        photo_count = 0
         bot.sendMessage(update.message.chat_id, text=self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]],
                         parse_mode=ParseMode.MARKDOWN,
                         reply_markup=self.reply_markup)
@@ -352,18 +338,18 @@ class ChinaBot:
         if query.data in ['PreviousP_in', 'NextP_in']:
             self.slide_in_inline(bot, update)
         if query.data == 'Do_photo':
-            id = self.answer[query.inline_message_id]
-            photo_count = 0
+            id = str(self.answer[query.inline_message_id])
+            self.photo_count[id] = 0
             link = self.photo[id]
-            keyboard = self.do_keybord(self.photo_count, len(self.photo[id]), 'picture_slide_inline')
-            bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count]) + ')',
+            keyboard = self.do_keybord(self.photo_count[id], len(self.photo[id]), 'picture_slide_inline')
+            bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count[id]]) + ')',
                                 inline_message_id=query.inline_message_id,
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
-            photo_count += 1
+            self.photo_count[id] += 1
             #bot.editMessageReplyMarkup(inline_message_id=query.inline_message_id, reply_markup=keyboard)
         if query.data == 'X':
-            id = self.answer[query.inline_message_id]
-            photo_count = 0
+            id = str(self.answer[query.inline_message_id])
+            self.photo_count[id] = 0
             keyboard = self.do_keybord(1, 5, 'do_picture_inline')
             product = self.product_wrap(bot, update, "ID")
             bot.editMessageText(text=u''.join(product[0]),
@@ -372,39 +358,37 @@ class ChinaBot:
 
     def slide_in_inline(self, bot, update):
         query = update.callback_query
-        id = self.answer[query.inline_message_id]
+        id = str(self.answer[query.inline_message_id])
         if query.data == 'PreviousP_in':
-            photo_count -= 2
+            self.photo_count[id] -= 2
         #bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
         link = self.photo[id]
-        if 0 < photo_count + 1 <= len(link):
-            keyboard = self.do_keybord(self.photo_count, len(link), 'picture_slide_inline')
-            bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count]) + ')',
+        if 0 < self.photo_count[id] + 1 <= len(link):
+            keyboard = self.do_keybord(self.photo_count[id], len(link), 'picture_slide_inline')
+            bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count[id]]) + ')',
                                 inline_message_id=query.inline_message_id,
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
-            photo_count += 1
+            self.photo_count[id] += 1
         else:
-            photo_count = 0
-            keyboard = self.do_keybord(self.photo_count, len(link), 'picture_slide_inline')
+            self.photo_count[id] = 0
+            keyboard = self.do_keybord(self.photo_count[id], len(link), 'picture_slide_inline')
             try:
-                bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count]) + ')',
+                bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count[id]]) + ')',
                                     inline_message_id=query.inline_message_id,
                                     parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             except:
                 pass
             finally:
-                photo_count += 1
+                self.photo_count[id] += 1
 
     def slide_in_chat(self, bot, update):
         query = update.callback_query
         id = str(int(query.message.message_id)-1)
         chat_id = str(query.message.chat_id)
-        print self.photo_count
-        print self.photo_count[chat_id][id]
-        #if idq != self.id + 1: return
+        if int(id) != int(self.id): return
         if query.data == 'PreviousP':
             self.photo_count[chat_id][id] -= 2
-        bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
+        #bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
         link = self.photo[str(query.message.chat_id)][str(self.count[str(query.message.chat_id)])]
         if 0 < self.photo_count[chat_id][id] + 1 <= len(link):
             keyboard = self.do_keybord(self.photo_count[chat_id][id],len(link), 'picture_slide')
@@ -423,7 +407,7 @@ class ChinaBot:
 
     def photog(self, bot, update):
         self.logger_wrap(update.message, 'photo')
-        bot.sendChatAction(update.message.chat_id, action=telegram.ChatAction.TYPING)
+        #bot.sendChatAction(update.message.chat_id, action=telegram.ChatAction.TYPING)
         link = self.photo[str(update.message.chat_id)][str(self.count[str(update.message.chat_id)])]
         keyboard = self.do_keybord(0, len(link), 'picture_slide')
         bot.sendMessage(update.message.chat_id, text=u'['+Emoji.CLOUD.decode('utf-8')+']('+str(link[0])+')', reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
@@ -431,11 +415,10 @@ class ChinaBot:
         chat_id = str(update.message.chat_id)
         self.photo_count[chat_id] = {}
         self.photo_count[chat_id][id] = 1
-        #print self.photo_count[dict_chat_id][dict_id]
+        self.id = id
 
     def get_next(self, bot, update):
         self.logger_wrap(update.message, 'next')
-        photo_count = 0
         try:
             self.count[str(update.message.chat_id)] += 1
             bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.count[str(update.message.chat_id)]+1), str(len(self.result[str(update.message.chat_id)])))+self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
@@ -446,7 +429,6 @@ class ChinaBot:
 
     def get_previous(self, bot, update):
         self.logger_wrap(update.message, 'previous')
-        photo_count = 0
         if self.count[str(update.message.chat_id)] >= 1:
             self.count[str(update.message.chat_id)] -= 1
             bot.sendMessage(update.message.chat_id, text=u'%s ИЗ %s\n' % (str(self.count[str(update.message.chat_id)]+1), str(len(self.result[str(update.message.chat_id)])))+self.result[str(update.message.chat_id)][self.count[str(update.message.chat_id)]], parse_mode=ParseMode.MARKDOWN, reply_markup=self.reply_markup)
@@ -460,7 +442,6 @@ class ChinaBot:
             self.count[str(update.message.chat_id)] = 0
             self.result[str(update.message.chat_id)] = []
             self.search_query[str(update.message.chat_id)] = ''
-            photo_count = 0
             self.start(bot, update)
         except:
             self.start(bot, update)
