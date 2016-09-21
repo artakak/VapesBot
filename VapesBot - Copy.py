@@ -408,7 +408,7 @@ class ChinaBot:
         #if idq != self.id + 1: return
         if query.data == 'PreviousP':
             self.photo_count[chat_id][id] -= 2
-        bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
+        #bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
         link = self.photo[id][str(self.count[id])]
         if 0 < self.photo_count[chat_id][id] + 1 <= len(link):
             keyboard = self.do_keybord(self.photo_count[chat_id][id],len(link), 'picture_slide')
