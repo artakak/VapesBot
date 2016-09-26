@@ -201,7 +201,7 @@ class ChinaBot:
 
     def search(self, bot, update):
         self.logger_wrap(update.message, 'search')
-        keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'Попробуй мой поиск '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), switch_inline_query='ego')]])
+        keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'Попробовать мой поиск '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), switch_inline_query='ego')]])
         bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию, также, Вы можете использовать встроенный механизм поиска в любом чате, обратившись к боту через @ChinaVapesBot',
                         parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
 
@@ -213,19 +213,19 @@ class ChinaBot:
             keyboard = self.do_keybord(1, 5, 'do_picture_inline')
             if query:
                 logger.info('Inline: %s from %s @%s %s' % (query, user.first_name, user.username, user.last_name))
-                products = self.product_wrap(bot, update, "Search_Inline")
+                try: products = self.product_wrap(bot, update, "Search_Inline")
+                except: return
                 if products:
                     k = 0
                     for product in products:
                         if k < 50:
-                            print str(product.product_id)
                             results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
                                                                     description=Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+u'  '+Emoji.BANKNOTE_WITH_DOLLAR_SIGN.decode('utf-8')+u'  '+str(product.product_price)+u' РУБ',
                                                                     thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
                                                                     parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
                             k +=1
                         else: break
-        bot.answerInlineQuery(update.inline_query.id, results)
+        bot.answerInlineQuery(update.inline_query.id, results, switch_pm_text=u'Я живу здесь '+Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
 
     def command_filter(self, bot, update):
         self.logger_wrap(update.message, 'command_filter')
