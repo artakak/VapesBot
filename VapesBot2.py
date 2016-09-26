@@ -13,7 +13,7 @@ import random
 
 db = SQLAlchemy('sqlite:///Test.db')
 
-# Enable logging
+# Enable logging 123
 logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO)
