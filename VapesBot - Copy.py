@@ -199,11 +199,44 @@ class ChinaBot:
         self.logger_wrap(update.message, 'about')
         bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n'+Emoji.CLOUD.decode('utf-8')*3+u' [China-Vapes.ru](http://china-vapes.ru) '+Emoji.CLOUD.decode('utf-8')*3, parse_mode=ParseMode.MARKDOWN)
 
+    def command_filter(self, bot, update):
+        self.logger_wrap(update.message, 'command_filter')
+        if update.message.text == 'TOP ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'):
+            self.top(bot, update)
+        elif update.message.text == u'Наугад ' + Emoji.GAME_DIE.decode('utf-8'):
+            self.random(bot, update)
+        elif update.message.text == u'Поиск ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
+            self.search(bot, update)
+        elif update.message.text == u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8'):
+            self.help(bot, update)
+        elif len(update.message.text) < 50:
+            self.do_search(bot, update)
+
     def search(self, bot, update):
         self.logger_wrap(update.message, 'search')
         keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'Попробовать мой поиск '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), switch_inline_query='ego')]])
         bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию, также, Вы можете использовать встроенный механизм поиска в любом чате, обратившись к боту через @ChinaVapesBot',
                         parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+
+    def del_previous(self, bot, update):
+        if update.message:
+            chat_id = str(update.message.chat_id)
+            id = str(update.message.message_id)
+            k = 2
+            m =1
+        elif update.callback_query:
+            chat_id = str(update.callback_query.message.chat_id)
+            id = str(update.callback_query.message.message_id)
+            k = 1
+            m = 0
+        try:
+            bot.editMessageReplyMarkup(chat_id=chat_id, message_id=str(int(id)-m))
+            self.photo_count[chat_id].__delitem__(str(int(id)-k))
+            self.result.__delitem__(str(int(id)-k))
+            self.photo.__delitem__(str(int(id)-k))
+            self.count.__delitem__(str(int(id)-k))
+        except: pass
+
 
     def inline_search(self, bot, update):
         if update.inline_query:
@@ -227,36 +260,10 @@ class ChinaBot:
                         else: break
         bot.answerInlineQuery(update.inline_query.id, results, switch_pm_text=u'Я живу здесь '+Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
 
-    def command_filter(self, bot, update):
-        self.logger_wrap(update.message, 'command_filter')
-        if update.message.text == 'TOP '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8'):
-            self.top(bot, update)
-        elif update.message.text == u'Наугад ' + Emoji.GAME_DIE.decode('utf-8'):
-            self.random(bot, update)
-        elif update.message.text == u'Поиск '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
-            self.search(bot, update)
-        elif update.message.text == u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8'):
-            self.help(bot, update)
-        elif update.message.text == Emoji.LEFTWARDS_BLACK_ARROW.decode('utf-8')+u' Предыдущий':
-            self.get_previous(bot, update)
-        elif update.message.text == u'Следующий '+Emoji.BLACK_RIGHTWARDS_ARROW.decode('utf-8'):
-            self.get_next(bot, update)
-        elif update.message.text == u'По возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
-            self.search_up(bot, update)
-        elif update.message.text == u'По убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
-            self.search_down(bot, update)
-        elif update.message.text == u'Пo возрастанию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
-            self.top_up(bot, update)
-        elif update.message.text == u'Пo убыванию '+Emoji.HEAVY_DOLLAR_SIGN.decode('utf-8'):
-            self.top_down(bot, update)
-        elif update.message.text == u'Закрыть ' + Emoji.CROSS_MARK.decode('utf-8'):
-            self.start(bot, update)
-        elif len(update.message.text) < 50:
-            self.do_search(bot, update)
-
     def do_search(self, bot, update):
         self.logger_wrap(update.message, 'do_search')
         self.search_query[str(update.message.chat_id)] = update.message.text
+        self.del_previous(bot, update)
         self.give(bot,update, 'Search_Down')
 
     def give(self, bot, update, args):
@@ -306,6 +313,7 @@ class ChinaBot:
 
     def top(self, bot, update):
         self.logger_wrap(update.message, 'top')
+        self.del_previous(bot, update)
         self.give(bot, update, 'TOP_Down')
 
     def random(self, bot, update):
@@ -313,7 +321,8 @@ class ChinaBot:
             self.logger_wrap(update.message, 'random')
         elif update.callback_query:
             self.logger_wrap(update.callback_query.message, 'random')
-        self.give(bot,update, 'Random')
+        self.del_previous(bot, update)
+        self.give(bot, update, 'Random')
 
     def top_down(self, bot, update):
         self.logger_wrap(update.message, 'top_down')
@@ -385,10 +394,7 @@ class ChinaBot:
         if query.data == 'Previous_item':
             self.get_previous(bot, update)
         if query.data == 'Close':
-            id = str(int(query.message.message_id) - 1)
-            chat_id = str(query.message.chat_id)
-            bot.editMessageReplyMarkup(chat_id=query.message.chat_id, message_id=query.message.message_id)
-            #self.start(bot, update)
+            self.del_previous(bot, update)
         if query.data in ['PreviousP', 'NextP', 'PreviousP_r', 'NextP_r']:
             self.slide_in_chat(bot, update)
         if query.data == 'X_r':
