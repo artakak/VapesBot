@@ -400,7 +400,7 @@ class ChinaBot:
             self.random(bot, update)
         if query.data == '1':
             bot.answerCallbackQuery(callback_query_id=str(query.id),
-                                    text=u'Я не кнопка, не надо меня жмакать ' + Emoji.CONFUSED_FACE.decode('utf-8'))
+                                    text=u'Не жмакайте мне там, щекотно ' + Emoji.CONFUSED_FACE.decode('utf-8'))
         if query.data in ['Do_photo_chat', 'Do_photo_random']:
             self.photog(bot, update)
         if query.data == 'Next_item':
