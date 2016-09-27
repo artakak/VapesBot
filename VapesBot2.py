@@ -193,14 +193,17 @@ class ChinaBot:
                            [u'Поиск '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Помощь '+Emoji.ORANGE_BOOK.decode('utf-8')]]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
         bot.sendMessage(chat_id, text=self.help_text, reply_markup=reply_markup)
+        self.del_previous(bot, update)
 
     def help(self, bot, update):
         self.logger_wrap(update.message, 'help')
         bot.sendMessage(update.message.chat_id, text=self.help_text)
+        self.del_previous(bot, update)
 
     def about(self, bot, update):
         self.logger_wrap(update.message, 'about')
         bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n'+Emoji.CLOUD.decode('utf-8')*3+u' [China-Vapes.ru](http://china-vapes.ru) '+Emoji.CLOUD.decode('utf-8')*3, parse_mode=ParseMode.MARKDOWN)
+        self.del_previous(bot, update)
 
     def command_filter(self, bot, update):
         self.logger_wrap(update.message, 'command_filter')
