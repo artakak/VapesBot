@@ -96,6 +96,8 @@ class ChinaBot:
         self.photo = {}
         self.answer = {}
         self.search_query = {}
+        self.like = {}
+        self.offset = {}
 
     def logger_wrap(self, message, command):
         if self.botan:
@@ -280,6 +282,7 @@ class ChinaBot:
             chat_id = str(update.message.chat_id)
             self.photo_count[chat_id] = {}
             self.photo_count[chat_id][id] = 1
+            self.offset[chat_id] = 1
             self.result[id] = self.product_wrap(bot, update, args)
             if self.result[id]:
                 self.count[id] = 0
@@ -305,9 +308,10 @@ class ChinaBot:
             if self.result[id]:
                 self.count[id] = 0
                 if args == 'Random':
+                    self.offset[chat_id] = 0
                     keyboard = self.do_keybord(0, len(self.result[id]), 'random')
-                    bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN,
-                            reply_markup=keyboard)
+                    bot.editMessageText(text=self.result[id][self.count[id]], chat_id=chat_id, message_id=id,
+                                        parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
                 else:
                     keyboard = self.do_keybord(0, len(self.result[id]), 'do_picture_chat')
                     bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN,
@@ -375,7 +379,7 @@ class ChinaBot:
         elif flag == 'random':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=Emoji.GAME_DIE.decode('utf-8'), callback_data='More_random'),
                                                        telegram.InlineKeyboardButton(text=Emoji.CAMERA.decode('utf-8'), callback_data='Do_photo_random'),
-                                                       telegram.InlineKeyboardButton(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8'), callback_data='Like'),
+                                                       telegram.InlineKeyboardButton(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8'), callback_data='LikeR'),
                                                        telegram.InlineKeyboardButton(text=Emoji.CROSS_MARK.decode('utf-8'), callback_data='Close')]])
         return keyboard
 
@@ -403,19 +407,28 @@ class ChinaBot:
             self.del_previous(bot, update)
         if query.data in ['PreviousP', 'NextP', 'PreviousP_r', 'NextP_r']:
             self.slide_in_chat(bot, update)
-        if query.data == 'X_r':
-            id = str(int(query.message.message_id) - 1)
+        if query.data in ['Like', 'LikeR']:
             chat_id = str(query.message.chat_id)
-            self.photo_count[chat_id][id] = 1
-            keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'random')
-            bot.editMessageText(text=self.result[id][self.count[id]],
+            id = str(int(query.message.message_id) - self.offset[chat_id])
+            self.like[chat_id] = self.result[id][self.count[id]]
+            if query.data == 'LikeR':
+                keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'random')
+            else:
+                keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
+            bot.editMessageText(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8')+'\n'+self.like[chat_id],
                                 chat_id=query.message.chat_id, message_id=query.message.message_id,
-                                parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
-        if query.data == 'X_c':
-            id = str(int(query.message.message_id)-1)
+                                parse_mode=ParseMode.MARKDOWN)
+            bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN,
+                                reply_markup=keyboard)
+            self.offset[chat_id]+=1
+        if query.data in ['X_r', 'X_c']:
             chat_id = str(query.message.chat_id)
+            id = str(int(query.message.message_id) - self.offset[chat_id])
             self.photo_count[chat_id][id] = 1
-            keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
+            if query.data == 'X_r':
+                keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'random')
+            else:
+                keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
             bot.editMessageText(text=self.result[id][self.count[id]],
                                 chat_id=query.message.chat_id, message_id=query.message.message_id,
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
@@ -467,8 +480,8 @@ class ChinaBot:
 
     def slide_in_chat(self, bot, update):
         query = update.callback_query
-        id = str(int(query.message.message_id)-1)
         chat_id = str(query.message.chat_id)
+        id = str(int(query.message.message_id)-self.offset[chat_id])
         #if idq != self.id + 1: return
         if query.data in ['PreviousP', 'PreviousP_r']:
             self.photo_count[chat_id][id] -= 2
@@ -499,8 +512,8 @@ class ChinaBot:
     def photog(self, bot, update):
         self.logger_wrap(update.callback_query.message, 'photo')
         query = update.callback_query
-        id = str(int(query.message.message_id)-1)
         chat_id = str(query.message.chat_id)
+        id = str(int(query.message.message_id)-self.offset[chat_id])
         #bot.sendChatAction(chat_id, action=telegram.ChatAction.TYPING)
         link = self.photo[id][str(self.count[id])]
         if query.data == 'Do_photo_chat':
@@ -514,7 +527,8 @@ class ChinaBot:
     def get_next(self, bot, update):
         self.logger_wrap(update.callback_query.message, 'next')
         query = update.callback_query
-        id = str(int(query.message.message_id)-1)
+        chat_id = str(query.message.chat_id)
+        id = str(int(query.message.message_id)-self.offset[chat_id])
         try:
             self.count[id] += 1
             keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
@@ -529,7 +543,8 @@ class ChinaBot:
     def get_previous(self, bot, update):
         self.logger_wrap(update.callback_query.message, 'previous')
         query = update.callback_query
-        id = str(int(query.message.message_id) - 1)
+        chat_id = str(query.message.chat_id)
+        id = str(int(query.message.message_id) - self.offset[chat_id])
         if self.count[id] >= 1:
             self.count[id] -= 1
             keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
