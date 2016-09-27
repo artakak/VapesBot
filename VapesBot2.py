@@ -135,47 +135,48 @@ class ChinaBot:
 
         except Exception as e:
             logger.exception(e)
-        if args == 'Search_Inline' and products:
+        if args == 'Search_Inline':
             return products
-        elif args == 'ID' and products:
+        elif args == 'ID':
             return self.good_view(bot, update, products, args)
         else:
             return self.good_view(bot, update, products, args=None)
 
     def good_view(self, bot, update, products, args):
         final = None
-        if args == 'Search_Inline':
-            final = [u'*Наименование*: ' + products.product_name + '\n'
-                     u'*Магазин*: ' + products.product_store_title + '\n'
-                     u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
-                     u'*Цена*: ' + str(products.product_price) + u' РУБ\n'
-                     u'[ЗАКАЗАТЬ]' + '(' + products.partner_url + ')\n']
-        elif args == 'ID':
-            final = [u'*Наименование*: ' + products[0].product_name + '\n'
-                     u'*Магазин*: ' + products[0].product_store_title + '\n'
-                     u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products[0].score) + '\n'
-                     u'*Цена*: ' + str(products[0].product_price) + u' РУБ\n'
-                     u'[ЗАКАЗАТЬ]' + '(' + products[0].partner_url + ')\n']
-            self.photo[str(products[0].product_id)] = products[0].product_other_picture.split('|')
+        if products:
+            if args == 'Search_Inline':
+                final = [u'*Наименование*: ' + products.product_name + '\n'
+                         u'*Магазин*: ' + products.product_store_title + '\n'
+                         u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                        u'*Цена*: ' + str(products.product_price) + u' РУБ\n'
+                        u'[ЗАКАЗАТЬ]' + '(' + products.partner_url + ')\n']
+            elif args == 'ID':
+                final = [u'*Наименование*: ' + products[0].product_name + '\n'
+                         u'*Магазин*: ' + products[0].product_store_title + '\n'
+                         u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products[0].score) + '\n'
+                        u'*Цена*: ' + str(products[0].product_price) + u' РУБ\n'
+                        u'[ЗАКАЗАТЬ]' + '(' + products[0].partner_url + ')\n']
+                self.photo[str(products[0].product_id)] = products[0].product_other_picture.split('|')
+                return final
+            else:
+                if update.message:
+                    id = str(update.message.message_id)
+                elif update.callback_query:
+                    id = str(update.callback_query.message.message_id)
+                self.photo[id] = {}
+                k = 0
+                for product in products:
+                    self.photo[id][str(k)] = []
+                    # self.photo[str(k)].append(product.product_picture)
+                    self.photo[id][str(k)] = product.product_other_picture.split('|')
+                    k += 1
+                final = [u'*Наименование*: '+product.product_name+'\n'
+                         u'*Магазин*: '+product.product_store_title+'\n'
+                         u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
+                         u'*Цена*: '+str(product.product_price)+u' РУБ\n'
+                         u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
             return final
-        else:
-            if update.message:
-                id = str(update.message.message_id)
-            elif update.callback_query:
-                id = str(update.callback_query.message.message_id)
-            self.photo[id] = {}
-            k = 0
-            for product in products:
-                self.photo[id][str(k)] = []
-                # self.photo[str(k)].append(product.product_picture)
-                self.photo[id][str(k)] = product.product_other_picture.split('|')
-                k += 1
-            final = [u'*Наименование*: '+product.product_name+'\n'
-                     u'*Магазин*: '+product.product_store_title+'\n'
-                     u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
-                     u'*Цена*: '+str(product.product_price)+u' РУБ\n'
-                     u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
-        return final
 
     def start(self, bot, update):
         try:
@@ -213,7 +214,7 @@ class ChinaBot:
             self.do_search(bot, update)
 
     def search(self, bot, update):
-        self.logger_wrap(update.message, 'search')
+        #self.logger_wrap(update.message, 'search')
         keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'Попробовать мой поиск '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), switch_inline_query='ego')]])
         bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию, также, Вы можете использовать встроенный механизм поиска в любом чате, обратившись к боту через @ChinaVapesBot',
                         parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
@@ -246,8 +247,9 @@ class ChinaBot:
             keyboard = self.do_keybord(1, 5, 'do_picture_inline')
             if query:
                 logger.info('Inline: %s from %s @%s %s' % (query, user.first_name, user.username, user.last_name))
-                try: products = self.product_wrap(bot, update, "Search_Inline")
-                except: return
+                if re.findall(ur'[А-Яа-я]', query):
+                    return
+                products = self.product_wrap(bot, update, "Search_Inline")
                 if products:
                     k = 0
                     for product in products:
@@ -261,14 +263,17 @@ class ChinaBot:
         bot.answerInlineQuery(update.inline_query.id, results, switch_pm_text=u'Я живу здесь '+Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
 
     def do_search(self, bot, update):
-        self.logger_wrap(update.message, 'do_search')
+        #self.logger_wrap(update.message, 'do_search')
+        if re.findall(ur'[А-Яа-я]', update.message.text):
+            bot.sendMessage(update.message.chat_id, text=u'Извините, мне нечего Вам показать ' + Emoji.CONFUSED_FACE.decode('utf-8'), parse_mode=ParseMode.MARKDOWN)
+            return self.del_previous(bot, update)
         self.search_query[str(update.message.chat_id)] = update.message.text
         self.del_previous(bot, update)
-        self.give(bot,update, 'Search_Down')
+        self.give(bot, update, 'Search_Down')
 
     def give(self, bot, update, args):
         if update.message:
-            self.logger_wrap(update.message, 'give')
+            #self.logger_wrap(update.message, 'give')
             #telegram.ReplyKeyboardHide(hide_keyboard=True)
             id = str(update.message.message_id)
             chat_id = str(update.message.chat_id)
