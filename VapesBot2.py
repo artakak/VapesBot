@@ -218,6 +218,7 @@ class ChinaBot:
         keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'Попробовать мой поиск '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), switch_inline_query='ego')]])
         bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию, также, Вы можете использовать встроенный механизм поиска в любом чате, обратившись к боту через @ChinaVapesBot',
                         parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+        self.del_previous(bot, update)
 
     def del_previous(self, bot, update):
         if update.message:
