@@ -356,8 +356,7 @@ class ChinaBot:
                                                        telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
                                                        telegram.InlineKeyboardButton(text='>', callback_data='Next_item')],
                                                        [telegram.InlineKeyboardButton(text=Emoji.CAMERA.decode('utf-8'), callback_data='Do_photo_chat'),
-                                                        telegram.InlineKeyboardButton(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8'), callback_data='Like'),
-                                                       telegram.InlineKeyboardButton(text=Emoji.CROSS_MARK.decode('utf-8'), callback_data='Close')]])
+                                                        telegram.InlineKeyboardButton(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8'), callback_data='Like')]])
         elif flag == 'picture_slide':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP'),
                                                        telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
@@ -379,8 +378,7 @@ class ChinaBot:
         elif flag == 'random':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=Emoji.GAME_DIE.decode('utf-8'), callback_data='More_random'),
                                                        telegram.InlineKeyboardButton(text=Emoji.CAMERA.decode('utf-8'), callback_data='Do_photo_random'),
-                                                       telegram.InlineKeyboardButton(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8'), callback_data='LikeR'),
-                                                       telegram.InlineKeyboardButton(text=Emoji.CROSS_MARK.decode('utf-8'), callback_data='Close')]])
+                                                       telegram.InlineKeyboardButton(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8'), callback_data='LikeR')]])
         return keyboard
 
     def inline_picture(self, bot, update):
@@ -397,6 +395,9 @@ class ChinaBot:
         query = update.callback_query
         if query.data == 'More_random':
             self.random(bot, update)
+        if query.data == '1':
+            bot.answerCallbackQuery(callback_query_id=str(query.id),
+                                    text=u'Я не кнопка, не надо меня жмакать ' + Emoji.CONFUSED_FACE.decode('utf-8'))
         if query.data in ['Do_photo_chat', 'Do_photo_random']:
             self.photog(bot, update)
         if query.data == 'Next_item':
