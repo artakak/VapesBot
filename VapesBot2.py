@@ -61,6 +61,7 @@ class ChinaBot:
         '/find - Поиск товаров по названию\n'
         '/help - Список комманд\n'
         '/about - О боте...\n'
+        'Для изменения сортировки в подборках нажмите <, находясь на первой позиции'
     )
 
     def __init__(self, telegram, botan):
@@ -77,10 +78,6 @@ class ChinaBot:
         dp.add_handler(CommandHandler('help', self.help))
         dp.add_handler(CommandHandler('about', self.about))
         dp.add_handler(CommandHandler('TOP', self.top))
-        dp.add_handler(CommandHandler('sort_up', self.top_up))
-        dp.add_handler(CommandHandler('sort_down', self.top_down))
-        dp.add_handler(CommandHandler('search_sort_up', self.search_up))
-        dp.add_handler(CommandHandler('search_sort_down', self.search_down))
         dp.add_handler(CommandHandler('find', self.search))
         dp.add_handler(CommandHandler('random', self.random))
         dp.add_handler(CallbackQueryHandler(self.filter_for_inline))
@@ -98,6 +95,7 @@ class ChinaBot:
         self.search_query = {}
         self.like = {}
         self.offset = {}
+        self.podbor = {}
 
     def logger_wrap(self, message, command):
         if self.botan:
@@ -114,9 +112,7 @@ class ChinaBot:
     def product_wrap(self, bot, update, args):
         products = None
         try:
-            if args == 'TOP_Up':
-                products = db.query(Product).filter_by(score=5).order_by(Product.product_price).all()
-            elif args == 'TOP_Down':
+            if args == 'TOP_Down':
                 products = db.query(Product).filter_by(score=5).order_by(Product.product_price.desc()).all()
             elif args == 'Random':
                 count = db.query(Product).count()
@@ -124,9 +120,6 @@ class ChinaBot:
             elif args == 'Search_Down':
                 string = str(self.search_query[str(update.message.chat_id)])
                 products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price.desc()).all()
-            elif args == 'Search_Up':
-                string = str(self.search_query[str(update.message.chat_id)])
-                products = db.query(Product).filter(Product.product_name.contains("%"+string+"%")).order_by(Product.product_price).all()
             elif args == 'Search_Inline':
                 string = str(update.inline_query.query)
                 products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price).all()
@@ -237,7 +230,9 @@ class ChinaBot:
             k = 1
             m = 0
         try:
-            bot.editMessageReplyMarkup(chat_id=chat_id, message_id=str(int(id)-m))
+            if update.message:
+                bot.editMessageText(text=u'Работа с подборкой %s была завершена, спасибо ' % self.podbor[chat_id] + Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'),
+                                    chat_id=chat_id, message_id=str(int(id)-m), parse_mode=ParseMode.MARKDOWN)
             self.photo_count[chat_id].__delitem__(str(int(id)-k))
             self.result.__delitem__(str(int(id)-k))
             self.photo.__delitem__(str(int(id)-k))
@@ -276,6 +271,7 @@ class ChinaBot:
         self.search_query[str(update.message.chat_id)] = update.message.text
         self.del_previous(bot, update)
         self.give(bot, update, 'Search_Down')
+        self.podbor[str(update.message.chat_id)] = '/find'
 
     def give(self, bot, update, args):
         if update.message:
@@ -328,30 +324,18 @@ class ChinaBot:
         self.logger_wrap(update.message, 'top')
         self.del_previous(bot, update)
         self.give(bot, update, 'TOP_Down')
+        self.podbor[str(update.message.chat_id)] = '/TOP'
 
     def random(self, bot, update):
         if update.message:
             self.logger_wrap(update.message, 'random')
+            chat_id = update.message.chat_id
         elif update.callback_query:
             self.logger_wrap(update.callback_query.message, 'random')
+            chat_id = update.callback_query.message.chat_id
         self.del_previous(bot, update)
         self.give(bot, update, 'Random')
-
-    def top_down(self, bot, update):
-        self.logger_wrap(update.message, 'top_down')
-        self.give(bot, update, 'TOP_Down')
-
-    def top_up(self, bot, update):
-        self.logger_wrap(update.message, 'top_up')
-        self.give(bot, update, 'TOP_Up')
-
-    def search_down(self, bot, update):
-        self.logger_wrap(update.message, 'search_down')
-        self.give(bot, update, 'Search_Down')
-
-    def search_up(self, bot, update):
-        self.logger_wrap(update.message, 'search_up')
-        self.give(bot, update, 'Search_Up')
+        self.podbor[str(chat_id)] = '/random'
 
     def do_keybord(self, current, total, flag):
         if flag == 'do_picture_chat':
@@ -400,7 +384,7 @@ class ChinaBot:
             self.random(bot, update)
         if query.data == '1':
             bot.answerCallbackQuery(callback_query_id=str(query.id),
-                                    text=u'Не жмакайте мне там, щекотно ' + Emoji.CONFUSED_FACE.decode('utf-8'))
+                                    text=u'Не жмакайте мне там, щекотно ' + Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
         if query.data in ['Do_photo_chat', 'Do_photo_random']:
             self.photog(bot, update)
         if query.data == 'Next_item':
@@ -424,6 +408,8 @@ class ChinaBot:
                                 parse_mode=ParseMode.MARKDOWN)
             bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN,
                                 reply_markup=keyboard)
+            bot.answerCallbackQuery(callback_query_id=str(query.id),
+                                    text=u'Отложили в чатик ' + Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
             self.offset[chat_id]+=1
         if query.data in ['X_r', 'X_c']:
             chat_id = str(query.message.chat_id)
@@ -556,7 +542,13 @@ class ChinaBot:
                                 chat_id=query.message.chat_id, message_id=query.message.message_id,
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
         else:
-            bot.answerCallbackQuery(callback_query_id=str(query.id), text=u'Извините, но мне туда нельзя ' + Emoji.CONFUSED_FACE.decode('utf-8'))
+            self.result[id] = list(self.result[id].__reversed__())
+            keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
+            bot.editMessageText(text=self.result[id][self.count[id]],
+                                chat_id=query.message.chat_id, message_id=query.message.message_id,
+                                parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+            bot.answerCallbackQuery(callback_query_id=str(query.id),
+                                    text=u'Произведена смена сортировки по цене ' + Emoji.WARNING_SIGN.decode('utf-8'))
             #self.start(bot, update)
 
     def close(self, bot, update):
