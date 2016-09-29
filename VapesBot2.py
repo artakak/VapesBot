@@ -3,17 +3,15 @@ from telegram import Emoji, ParseMode, InlineQueryResultArticle, InputTextMessag
 from telegram.ext import Updater, CommandHandler, MessageHandler, InlineQueryHandler, Filters, CallbackQueryHandler, ChosenInlineResultHandler
 import telegram
 import logging
-import time
 import sys
 import re
-import json
 from sqlalchemy_wrapper import SQLAlchemy
 import random
 
 
 db = SQLAlchemy('sqlite:///Test.db')
 
-# Enable logging 123
+# Enable logging
 logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO)
@@ -64,6 +62,30 @@ class ChinaBot:
         'Для изменения сортировки в подборках нажмите <, находясь на первой позиции'
     )
 
+    ut = {'help':
+              {'RU':('Список комманд:\n'
+                       '/TOP - Подборка товаров с наивысшим рейтингом\n'
+                       '/random - Показ случайного товара\n'
+                       '/find - Поиск товаров по названию\n'
+                       '/EN - Изменить локализацию на En\n'
+                       '/RU - Изменить локализацию на Ru\n'
+                       '/help - Список комманд\n'
+                       '/about - О боте...\n'
+                       'Для изменения сортировки в подборках нажмите <, находясь на первой позиции'),
+
+               'EN':('List of commands:\n'
+                       '/TOP - Only best products\n'
+                       '/random - Random product\n'
+                       '/find - Find products by name\n'
+                       '/EN - Change localisation En\n'
+                       '/RU - Change localisation Ru\n'
+                       '/help - List of commands\n'
+                       '/about - About...\n'
+                       'If you want change sorting of the results in sets press < at first position')},
+          'product':
+              {'RU':[u'Наименование',u'Магазин',u'Рейтинг',u'Цена',u'ЗАКАЗАТЬ'],
+               'EN':['Item','Store','Rating','Cost','Purchase']}}
+
     def __init__(self, telegram, botan):
         if botan:
             from telegram.contrib.botan import Botan
@@ -80,6 +102,8 @@ class ChinaBot:
         dp.add_handler(CommandHandler('TOP', self.top))
         dp.add_handler(CommandHandler('find', self.search))
         dp.add_handler(CommandHandler('random', self.random))
+        dp.add_handler(CommandHandler('EN', self.engl))
+        dp.add_handler(CommandHandler('RU', self.russ))
         dp.add_handler(CallbackQueryHandler(self.filter_for_inline))
         dp.add_handler(InlineQueryHandler(self.inline_search))
         dp.add_handler(ChosenInlineResultHandler(self.inline_picture))
@@ -96,6 +120,7 @@ class ChinaBot:
         self.like = {}
         self.offset = {}
         self.podbor = {}
+        self.choosen_locale = {}
 
     def logger_wrap(self, message, command):
         if self.botan:
@@ -141,24 +166,31 @@ class ChinaBot:
         final = None
         if products:
             if args == 'Search_Inline':
-                final = [u'*Наименование*: ' + products.product_name + '\n'
-                         u'*Магазин*: ' + products.product_store_title + '\n'
-                         u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
-                        u'*Цена*: ' + str(products.product_price) + u' РУБ\n'
-                        u'[ЗАКАЗАТЬ]' + '(' + products.partner_url + ')\n']
+                user_id = str(update.inline_query.from_user.id)
+                locale = self.choosen_locale[user_id]
+                final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
+                         u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
+                         u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                         u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price) + u' РУБ\n'
+                         u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
             elif args == 'ID':
-                final = [u'*Наименование*: ' + products[0].product_name + '\n'
-                         u'*Магазин*: ' + products[0].product_store_title + '\n'
-                         u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products[0].score) + '\n'
-                        u'*Цена*: ' + str(products[0].product_price) + u' РУБ\n'
-                        u'[ЗАКАЗАТЬ]' + '(' + products[0].partner_url + ')\n']
+                user_id = str(update.chosen_inline_result.from_user.id)
+                locale = self.choosen_locale[user_id]
+                final = [u'*%s*: ' % self.ut['product'][locale][0] + products[0].product_name + '\n'
+                         u'*%s*: ' % self.ut['product'][locale][1] + products[0].product_store_title + '\n'
+                         u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products[0].score) + '\n'
+                         u'*%s*: ' % self.ut['product'][locale][3] + str(products[0].product_price) + u' РУБ\n'
+                         u'[%s]' % self.ut['product'][locale][4] + '(' + products[0].partner_url + ')\n']
                 self.photo[str(products[0].product_id)] = products[0].product_other_picture.split('|')
                 return final
             else:
                 if update.message:
                     id = str(update.message.message_id)
+                    user_id = str(update.message.from_user.id)
                 elif update.callback_query:
                     id = str(update.callback_query.message.message_id)
+                    user_id = str(update.callback_query.from_user.id)
+                locale = self.choosen_locale[user_id]
                 self.photo[id] = {}
                 k = 0
                 for product in products:
@@ -166,36 +198,60 @@ class ChinaBot:
                     # self.photo[str(k)].append(product.product_picture)
                     self.photo[id][str(k)] = product.product_other_picture.split('|')
                     k += 1
-                final = [u'*Наименование*: '+product.product_name+'\n'
-                         u'*Магазин*: '+product.product_store_title+'\n'
-                         u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
-                         u'*Цена*: '+str(product.product_price)+u' РУБ\n'
-                         u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
+                final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
+                         u'*%s*: ' % self.ut['product'][locale][1] + product.product_store_title + '\n'
+                         u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score) + '\n'
+                         u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price) + u' РУБ\n'
+                         u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
             return final
 
     def start(self, bot, update):
         try:
             self.logger_wrap(update.message, 'start')
             chat_id = str(update.message.chat_id)
+            user_id = str(update.message.from_user.id)
         except:
-            self.logger_wrap(update.callback_query.message, 'photo')
+            self.logger_wrap(update.callback_query.message, 'start')
             chat_id = str(update.callback_query.message.chat_id)
-        bot.sendMessage(chat_id, text=u'*Электронные сигареты по доступным ценам*\n' + Emoji.CLOUD.decode('utf-8') * 3 + u' [China-Vapes.ru](http://china-vapes.ru) ' + Emoji.CLOUD.decode('utf-8') * 3,
-                        parse_mode=ParseMode.MARKDOWN)
-        custom_keyboard = [['TOP '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8'),u'Наугад '+Emoji.GAME_DIE.decode('utf-8')],
-                           [u'Поиск '+Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'),u'Помощь '+Emoji.ORANGE_BOOK.decode('utf-8')]]
+            user_id = str(update.callback_query.message.from_user.id)
+        try:
+            self.choosen_locale[user_id]
+            custom_keyboard = [['TOP ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), u'Наугад ' + Emoji.GAME_DIE.decode('utf-8')],
+                               [u'Поиск ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8')]]
+            reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
+            bot.sendMessage(chat_id, text=u'\nПривет! Меня зовут @VapesBot, я помогу Вам найти электронные сигареты и аксессуары по доступным ценам с возможностью бесплатной доставки по всему миру.\n',
+                            parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
+        except:
+            custom_keyboard = [['/RU', '/EN']]
+            reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
+            bot.sendMessage(chat_id, text=(u'\nПривет! Меня зовут @VapesBot, я помогу Вам найти электронные сигареты и аксессуары по доступным ценам с возможностью бесплатной доставки по всему миру.\n'
+                                           u'Для начала, необходимо выбрать язык интерфейса'), parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
+        self.del_previous(bot, update)
+
+    def engl(self, bot, update):
+        self.choosen_locale[str(update.message.from_user.id)] = 'EN'
+        custom_keyboard = [['TOP ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), u'Наугад ' + Emoji.GAME_DIE.decode('utf-8')],
+                           [u'Поиск ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8')]]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
-        bot.sendMessage(chat_id, text=self.help_text, reply_markup=reply_markup)
+        bot.sendMessage(update.message.chat_id, text=u'Язык был установлен EN', reply_markup=reply_markup)
+        self.del_previous(bot, update)
+
+    def russ(self, bot, update):
+        self.choosen_locale[str(update.message.from_user.id)] = 'RU'
+        custom_keyboard = [['TOP ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), u'Наугад ' + Emoji.GAME_DIE.decode('utf-8')],
+                           [u'Поиск ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8')]]
+        reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
+        bot.sendMessage(update.message.chat_id, text=u'Язык был установлен RU', reply_markup=reply_markup)
         self.del_previous(bot, update)
 
     def help(self, bot, update):
         self.logger_wrap(update.message, 'help')
-        bot.sendMessage(update.message.chat_id, text=self.help_text)
+        bot.sendMessage(update.message.chat_id, text=self.ut['help']['RU'])
         self.del_previous(bot, update)
 
     def about(self, bot, update):
         self.logger_wrap(update.message, 'about')
-        bot.sendMessage(update.message.chat_id, text=u'*Электронные сигареты по доступным ценам*\n'+Emoji.CLOUD.decode('utf-8')*3+u' [China-Vapes.ru](http://china-vapes.ru) '+Emoji.CLOUD.decode('utf-8')*3, parse_mode=ParseMode.MARKDOWN)
+        bot.sendMessage(update.message.chat_id, text=u'\nПривет! Меня зовут @VapesBot, я помогу Вам найти электронные сигареты и аксессуары по доступным ценам с возможностью бесплатной доставки по всему миру\n', parse_mode=ParseMode.MARKDOWN)
         self.del_previous(bot, update)
 
     def command_filter(self, bot, update):
@@ -275,6 +331,11 @@ class ChinaBot:
 
     def give(self, bot, update, args):
         if update.message:
+            try:
+                self.choosen_locale[str(update.message.from_user.id)]
+            except:
+                self.start(bot, update)
+                return
             #self.logger_wrap(update.message, 'give')
             #telegram.ReplyKeyboardHide(hide_keyboard=True)
             id = str(update.message.message_id)
@@ -298,6 +359,11 @@ class ChinaBot:
                 self.result.__delitem__(id)
         elif update.callback_query:
             self.logger_wrap(update.callback_query.message, 'give')
+            try:
+                self.choosen_locale[str(update.callback_query.from_user.id)]
+            except:
+                self.start(bot, update)
+                return
             # telegram.ReplyKeyboardHide(hide_keyboard=True)
             id = str(update.callback_query.message.message_id)
             chat_id = str(update.callback_query.message.chat_id)
@@ -409,7 +475,7 @@ class ChinaBot:
             bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN,
                                 reply_markup=keyboard)
             bot.answerCallbackQuery(callback_query_id=str(query.id),
-                                    text=u'Отложили в чатик ' + Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
+                                    text=u'Отложил в чатик ' + Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
             self.offset[chat_id]+=1
         if query.data in ['X_r', 'X_c']:
             chat_id = str(query.message.chat_id)
