@@ -26,20 +26,22 @@ class Product(db.Model):
     product_name = db.Column(db.String(200), unique=False)
     product_picture = db.Column(db.String(200), unique=True)
     product_other_picture = db.Column(db.Text, unique=False)
-    product_price = db.Column(db.Integer, unique=False)
+    product_price_r = db.Column(db.Integer, unique=False)
+    product_price_u = db.Column(db.Integer, unique=False)
     product_store_id = db.Column(db.String(20), unique=False)
     product_store_title = db.Column(db.String(20), unique=False)
     partner_url = db.Column(db.String(200), unique=False)
     orders_count = db.Column(db.Integer, unique=False)
     score = db.Column(db.Integer, unique=False)
 
-    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_price, product_store_id, product_store_title, partner_url, orders_count, score):
+    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_price_r, product_price_u, product_store_id, product_store_title, partner_url, orders_count, score):
         self.product_id = product_id
         self.product_cat_id = product_cat_id
         self.product_name = product_name
         self.product_picture = product_picture
         self.product_other_picture = product_other_picture
-        self.product_price = product_price
+        self.product_price = product_price_r
+        self.product_price = product_price_u
         self.product_store_id = product_store_id
         self.product_store_title = product_store_title
         self.partner_url = partner_url
@@ -84,7 +86,18 @@ class ChinaBot:
                        'If you want change sorting of the results in sets press < at first position')},
           'product':
               {'RU':[u'Наименование',u'Магазин',u'Рейтинг',u'Цена',u'ЗАКАЗАТЬ'],
-               'EN':['Item','Store','Rating','Cost','Purchase']}}
+               'EN':['Item','Store','Rating','Cost','Purchase']},
+          'hello':
+              {'RU':u'Привет! Меня зовут @VapesBot, я помогу Вам найти электронные сигареты и аксессуары по доступным ценам с возможностью бесплатной доставки по всему миру.',
+               'EN':'Hello! My name is @VapesBot, I can find best offers of E-cigs and accessories for you, best prices and free world-wide delivery.'},
+          'hello_lang':
+              {'RU':(u'\nПривет! Меня зовут @VapesBot, я помогу Вам найти электронные сигареты и аксессуары по доступным ценам с возможностью бесплатной доставки по всему миру.\n'
+                     u'Для начала, необходимо выбрать язык интерфейса.\n'),
+               'EN':('Hello! My name is @VapesBot, I can find best offers of E-cigs and accessories for you, best prices and free world-wide delivery.\n'
+                     'Please, choose localisation.\n')},
+          'main_keyboard':
+              {'RU':['TOP ', u'Наугад ', u'Поиск ', u'Помощь '],
+               'EN':['TOP ', 'Random ', 'Find ', 'Help ']}}
 
     def __init__(self, telegram, botan):
         if botan:
@@ -129,7 +142,7 @@ class ChinaBot:
                 event_name=command
             )
         user = message.from_user
-        logger.info(u'%s from %s @%s %s' % (message.text,
+        logger.info(u'%s from %s @%s %s' % (message.text[0:20],
                                             user.first_name,
                                             user.username,
                                             user.last_name))
@@ -138,16 +151,16 @@ class ChinaBot:
         products = None
         try:
             if args == 'TOP_Down':
-                products = db.query(Product).filter_by(score=5).order_by(Product.product_price.desc()).all()
+                products = db.query(Product).filter_by(score=5).order_by(Product.product_price_u.desc()).all()
             elif args == 'Random':
                 count = db.query(Product).count()
                 products = db.query(Product).filter_by(id=random.randint(1, count)).limit(10).all()
             elif args == 'Search_Down':
                 string = str(self.search_query[str(update.message.chat_id)])
-                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price.desc()).all()
+                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price_u.desc()).all()
             elif args == 'Search_Inline':
                 string = str(update.inline_query.query)
-                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price).all()
+                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price_u).all()
             elif args == 'ID':
                 try: string = str(update.chosen_inline_result.result_id)
                 except: string = self.answer[str(update.callback_query.inline_message_id)]
@@ -168,19 +181,33 @@ class ChinaBot:
             if args == 'Search_Inline':
                 user_id = str(update.inline_query.from_user.id)
                 locale = self.choosen_locale[user_id]
-                final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
-                         u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
-                         u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
-                         u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price) + u' РУБ\n'
-                         u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
+                if locale == 'RU':
+                    final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_r) + u' РУБ\n'
+                             u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
+                elif locale == 'EN':
+                    final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD\n'
+                             u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
             elif args == 'ID':
                 user_id = str(update.chosen_inline_result.from_user.id)
                 locale = self.choosen_locale[user_id]
-                final = [u'*%s*: ' % self.ut['product'][locale][0] + products[0].product_name + '\n'
-                         u'*%s*: ' % self.ut['product'][locale][1] + products[0].product_store_title + '\n'
-                         u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products[0].score) + '\n'
-                         u'*%s*: ' % self.ut['product'][locale][3] + str(products[0].product_price) + u' РУБ\n'
-                         u'[%s]' % self.ut['product'][locale][4] + '(' + products[0].partner_url + ')\n']
+                if locale == 'RU':
+                    final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_r) + u' РУБ\n'
+                             u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
+                elif locale == 'EN':
+                    final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD\n'
+                             u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
                 self.photo[str(products[0].product_id)] = products[0].product_other_picture.split('|')
                 return final
             else:
@@ -198,11 +225,18 @@ class ChinaBot:
                     # self.photo[str(k)].append(product.product_picture)
                     self.photo[id][str(k)] = product.product_other_picture.split('|')
                     k += 1
-                final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
-                         u'*%s*: ' % self.ut['product'][locale][1] + product.product_store_title + '\n'
-                         u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score) + '\n'
-                         u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price) + u' РУБ\n'
-                         u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
+                if locale == 'RU':
+                    final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + product.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_r) + u' РУБ\n'
+                             u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
+                elif locale == 'EN':
+                    final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + product.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_u) + ' USD\n'
+                             u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
             return final
 
     def start(self, bot, update):
@@ -216,53 +250,70 @@ class ChinaBot:
             user_id = str(update.callback_query.message.from_user.id)
         try:
             self.choosen_locale[user_id]
-            custom_keyboard = [['TOP ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), u'Наугад ' + Emoji.GAME_DIE.decode('utf-8')],
-                               [u'Поиск ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8')]]
+            local = self.choosen_locale[user_id]
+            custom_keyboard = [[self.ut['main_keyboard'][local][0] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), self.ut['main_keyboard'][local][1] + Emoji.GAME_DIE.decode('utf-8')],
+                               [self.ut['main_keyboard'][local][2] + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), self.ut['main_keyboard'][local][3] + Emoji.ORANGE_BOOK.decode('utf-8')]]
             reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
-            bot.sendMessage(chat_id, text=u'\nПривет! Меня зовут @VapesBot, я помогу Вам найти электронные сигареты и аксессуары по доступным ценам с возможностью бесплатной доставки по всему миру.\n',
+            bot.sendMessage(chat_id, text=self.ut['hello'][self.choosen_locale[user_id]],
                             parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
         except:
             custom_keyboard = [['/RU', '/EN']]
             reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
-            bot.sendMessage(chat_id, text=(u'\nПривет! Меня зовут @VapesBot, я помогу Вам найти электронные сигареты и аксессуары по доступным ценам с возможностью бесплатной доставки по всему миру.\n'
-                                           u'Для начала, необходимо выбрать язык интерфейса'), parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
+            bot.sendMessage(chat_id, text=(self.ut['hello_lang']['EN']+self.ut['hello_lang']['RU']), parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
         self.del_previous(bot, update)
 
     def engl(self, bot, update):
         self.choosen_locale[str(update.message.from_user.id)] = 'EN'
-        custom_keyboard = [['TOP ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), u'Наугад ' + Emoji.GAME_DIE.decode('utf-8')],
-                           [u'Поиск ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8')]]
+        custom_keyboard = [[self.ut['main_keyboard']['EN'][0] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), self.ut['main_keyboard']['EN'][1] + Emoji.GAME_DIE.decode('utf-8')],
+                           [self.ut['main_keyboard']['EN'][2] + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), self.ut['main_keyboard']['EN'][3] + Emoji.ORANGE_BOOK.decode('utf-8')]]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
-        bot.sendMessage(update.message.chat_id, text=u'Язык был установлен EN', reply_markup=reply_markup)
+        bot.sendMessage(update.message.chat_id, text=u'Language was set EN '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), reply_markup=reply_markup)
         self.del_previous(bot, update)
+        self.help(bot, update)
 
     def russ(self, bot, update):
         self.choosen_locale[str(update.message.from_user.id)] = 'RU'
-        custom_keyboard = [['TOP ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), u'Наугад ' + Emoji.GAME_DIE.decode('utf-8')],
-                           [u'Поиск ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8')]]
+        custom_keyboard = [[self.ut['main_keyboard']['RU'][0] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), self.ut['main_keyboard']['RU'][1] + Emoji.GAME_DIE.decode('utf-8')],
+                           [self.ut['main_keyboard']['RU'][2] + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), self.ut['main_keyboard']['RU'][3] + Emoji.ORANGE_BOOK.decode('utf-8')]]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
-        bot.sendMessage(update.message.chat_id, text=u'Язык был установлен RU', reply_markup=reply_markup)
+        bot.sendMessage(update.message.chat_id, text=u'Язык был установлен RU '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), reply_markup=reply_markup)
         self.del_previous(bot, update)
+        self.help(bot, update)
 
     def help(self, bot, update):
         self.logger_wrap(update.message, 'help')
-        bot.sendMessage(update.message.chat_id, text=self.ut['help']['RU'])
+        try:
+            local = self.choosen_locale[str(update.message.from_user.id)]
+        except:
+            self.start(bot, update)
+            return
+        bot.sendMessage(update.message.chat_id, text=self.ut['help'][local])
         self.del_previous(bot, update)
 
     def about(self, bot, update):
         self.logger_wrap(update.message, 'about')
-        bot.sendMessage(update.message.chat_id, text=u'\nПривет! Меня зовут @VapesBot, я помогу Вам найти электронные сигареты и аксессуары по доступным ценам с возможностью бесплатной доставки по всему миру\n', parse_mode=ParseMode.MARKDOWN)
+        try:
+            local = self.choosen_locale[str(update.message.from_user.id)]
+        except:
+            self.start(bot, update)
+            return
+        bot.sendMessage(update.message.chat_id, text=self.ut['hello'][local], parse_mode=ParseMode.MARKDOWN)
         self.del_previous(bot, update)
 
     def command_filter(self, bot, update):
         self.logger_wrap(update.message, 'command_filter')
-        if update.message.text == 'TOP ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'):
+        try:
+            locale = self.choosen_locale[str(update.message.from_user.id)]
+        except:
+            self.start(bot, update)
+            return
+        if update.message.text == self.ut['main_keyboard'][locale][0] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'):
             self.top(bot, update)
-        elif update.message.text == u'Наугад ' + Emoji.GAME_DIE.decode('utf-8'):
+        elif update.message.text == self.ut['main_keyboard'][locale][1] + Emoji.GAME_DIE.decode('utf-8'):
             self.random(bot, update)
-        elif update.message.text == u'Поиск ' + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
+        elif update.message.text == self.ut['main_keyboard'][locale][2] + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
             self.search(bot, update)
-        elif update.message.text == u'Помощь ' + Emoji.ORANGE_BOOK.decode('utf-8'):
+        elif update.message.text == self.ut['main_keyboard'][locale][3] + Emoji.ORANGE_BOOK.decode('utf-8'):
             self.help(bot, update)
         elif len(update.message.text) < 50:
             self.do_search(bot, update)
@@ -295,7 +346,6 @@ class ChinaBot:
             self.count.__delitem__(str(int(id)-k))
         except: pass
 
-
     def inline_search(self, bot, update):
         if update.inline_query:
             user = update.inline_query.from_user
@@ -304,7 +354,7 @@ class ChinaBot:
             keyboard = self.do_keybord(1, 5, 'do_picture_inline')
             if query:
                 logger.info('Inline: %s from %s @%s %s' % (query, user.first_name, user.username, user.last_name))
-                if re.findall(ur'[А-Яа-я]', query):
+                if re.findall(r'[^A-Za-z\s]', query):
                     return
                 products = self.product_wrap(bot, update, "Search_Inline")
                 if products:
@@ -321,7 +371,7 @@ class ChinaBot:
 
     def do_search(self, bot, update):
         #self.logger_wrap(update.message, 'do_search')
-        if re.findall(ur'[А-Яа-я]', update.message.text):
+        if re.findall(r'[^A-Za-z\s]', update.message.text):
             bot.sendMessage(update.message.chat_id, text=u'Извините, мне нечего Вам показать ' + Emoji.CONFUSED_FACE.decode('utf-8'), parse_mode=ParseMode.MARKDOWN)
             return self.del_previous(bot, update)
         self.search_query[str(update.message.chat_id)] = update.message.text
