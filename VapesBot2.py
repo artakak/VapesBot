@@ -24,7 +24,7 @@ class Product(db.Model):
     product_id = db.Column(db.String(20), unique=True)
     product_cat_id = db.Column(db.String(10), unique=False)
     product_name = db.Column(db.String(200), unique=False)
-    product_picture = db.Column(db.String(200), unique=True)
+    product_picture = db.Column(db.String(200), unique=False)
     product_other_picture = db.Column(db.Text, unique=False)
     product_price_r = db.Column(db.Integer, unique=False)
     product_price_u = db.Column(db.Integer, unique=False)

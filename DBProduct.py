@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import requests, json, urllib2, BeautifulSoup, re
+import requests, json, urllib2, BeautifulSoup, re, time, random
 from sqlalchemy_wrapper import SQLAlchemy
 
 db = SQLAlchemy('sqlite:///Test.db')
@@ -9,7 +9,7 @@ class Product(db.Model):
     product_id = db.Column(db.String(20), unique=True)
     product_cat_id = db.Column(db.String(10), unique=False)
     product_name = db.Column(db.String(200), unique=False)
-    product_picture = db.Column(db.String(200), unique=True)
+    product_picture = db.Column(db.String(200), unique=False)
     product_other_picture = db.Column(db.Text, unique=False)
     product_price_r = db.Column(db.Integer, unique=False)
     product_price_u = db.Column(db.Integer, unique=False)
@@ -63,8 +63,11 @@ def get_products_list():
                     if len(product['all_images']) < 2:
                         try:
                             req = urllib2.Request(product['url'])
+                            time.sleep(random.randint(0,5))
                             page = urllib2.urlopen(req)
                             soup = BeautifulSoup.BeautifulSoup(page.read(), fromEncoding="utf-8")
+                            print product['url']
+                            #print soup
                             name2 = []
                             for t in soup.findAll("span", {"class": "img-thumb-item"}):
                                 name2.append(t.next['src'])
