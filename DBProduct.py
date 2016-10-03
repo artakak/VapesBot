@@ -39,13 +39,15 @@ class Product(db.Model):
 
 
 def get_products_list():
-        result = ('req3','req4')
+        result = ('req3','req4','req5','req6')
         post_url_api = 'http://api.epn.bz/json'
         req_pull={'req1':{'action':'list_categories','lang':'en'},
                   'req2':{'action':'offer_info','id':'32611301612','currency':'RUR,USD','lang':'en'},
                   'req3':{'action':'search','store':'335020,1247181','limit':'10000','currency':'RUR,USD','lang':'en'},
-                  'req4': {'action': 'search', 'store': '409690,1209066', 'limit': '10000','currency': 'RUR,USD', 'lang': 'en'}
-                  }
+                  'req4': {'action': 'search', 'store': '409690,1209066', 'limit': '10000','currency': 'RUR,USD', 'lang': 'en'},
+                  'req5': {'action': 'search', 'store': '2144005', 'limit': '10000', 'currency': 'RUR,USD', 'lang': 'en'},
+                  'req6': {'action': 'search', 'store': '1185223', 'limit': '10000', 'currency': 'RUR,USD', 'lang': 'en'}
+                 }
         post_data ={'user_api_key':'8d6467cedd2db955e23ef3d4e9b32760',
                    'user_hash':'o4jauozbl5c3jfrcco1droidutid00g4',
                    'api_version': '2',
@@ -58,6 +60,7 @@ def get_products_list():
         #print (data['results']['req2'])
         count = 1
         for k in result:
+            print k + ': ' + str(len(data['results'][k]['offers']))
             for product in data['results'][k]['offers']:
                 if 'pcs/lot' not in product['name'] and 'pcs' not in product['name'] and 'PCS' not in product['name']:
                     if len(product['all_images']) < 2:
@@ -74,6 +77,7 @@ def get_products_list():
                             name = re.findall(r'[^/]+\.jpg$', product['picture'])
                             print name
                             print name2
+                            assert (name2 != [])
                             true = []
                             for s in name2:
                                 true.append(re.sub(ur'[^/]+\.jpg$', name[0], s))
@@ -82,6 +86,7 @@ def get_products_list():
                             all_img = '|'.join(true)
                         except:
                             all_img = '|'.join(product['all_images'])
+                            print 'EXCEPT'
                     else:
                         all_img = '|'.join(product['all_images'])
                     db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['prices']['RUR'], product['prices']['USD'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
