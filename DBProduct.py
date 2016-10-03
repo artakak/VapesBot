@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import requests, json, urllib2, BeautifulSoup, re, time, random
+import requests, json, BeautifulSoup, re, time, random
 from sqlalchemy_wrapper import SQLAlchemy
 
 db = SQLAlchemy('sqlite:///Test.db')
@@ -59,16 +59,16 @@ def get_products_list():
         data = json.loads(post_req.text)
         #print (data['results']['req2'])
         count = 1
+        headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36'}
         for k in result:
             print k + ': ' + str(len(data['results'][k]['offers']))
             for product in data['results'][k]['offers']:
                 if 'pcs/lot' not in product['name'] and 'pcs' not in product['name'] and 'PCS' not in product['name']:
                     if len(product['all_images']) < 2:
                         try:
-                            req = urllib2.Request(product['url'])
+                            req = requests.get(product['url'], headers=headers)
                             time.sleep(random.randint(0,5))
-                            page = urllib2.urlopen(req)
-                            soup = BeautifulSoup.BeautifulSoup(page.read(), fromEncoding="utf-8")
+                            soup = BeautifulSoup.BeautifulSoup(req.text)
                             print product['url']
                             #print soup
                             name2 = []
@@ -81,14 +81,17 @@ def get_products_list():
                             true = []
                             for s in name2:
                                 true.append(re.sub(ur'[^/]+\.jpg$', name[0], s))
-                            print 'OK'+str(count)
+                            print 'OK_PARS'+str(count)
                             count+=1
                             all_img = '|'.join(true)
                         except:
                             all_img = '|'.join(product['all_images'])
-                            print 'EXCEPT'
+                            print 'OK_EPN_one' + str(count)
+                            count += 1
                     else:
                         all_img = '|'.join(product['all_images'])
+                        print 'OK_EPN_many' + str(count)
+                        count += 1
                     db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['prices']['RUR'], product['prices']['USD'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
 
 #print (get_products_list())
