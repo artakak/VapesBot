@@ -59,7 +59,8 @@ def get_products_list():
         data = json.loads(post_req.text)
         #print (data['results']['req2'])
         count = 1
-        headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36'}
+        headers = {}
+        #s = requests.Session()
         for k in result:
             print k + ': ' + str(len(data['results'][k]['offers']))
             for product in data['results'][k]['offers']:
@@ -67,7 +68,7 @@ def get_products_list():
                     if len(product['all_images']) < 2:
                         try:
                             req = requests.get(product['url'], headers=headers)
-                            time.sleep(random.randint(0,5))
+                            #time.sleep(random.randint(0,5))
                             soup = BeautifulSoup.BeautifulSoup(req.text)
                             print product['url']
                             #print soup
