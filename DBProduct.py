@@ -58,54 +58,58 @@ def get_products_list():
         #print (post_req.text)
         data = json.loads(post_req.text)
         #print (data['results']['req2'])
-        count = 1
-        headers = {}
-        #s = requests.Session()
         for k in result:
             print k + ': ' + str(len(data['results'][k]['offers']))
             for product in data['results'][k]['offers']:
                 if 'pcs/lot' not in product['name'] and 'pcs' not in product['name'] and 'PCS' not in product['name']:
-                    if len(product['all_images']) < 2:
-                        try:
-                            req = requests.get(product['url'], headers=headers)
-                            #time.sleep(random.randint(0,5))
-                            soup = BeautifulSoup.BeautifulSoup(req.text)
-                            print product['url']
-                            #print soup
-                            name2 = []
-                            for t in soup.findAll("span", {"class": "img-thumb-item"}):
-                                name2.append(t.next['src'])
-                            name = re.findall(r'[^/]+\.jpg$', product['picture'])
-                            print name
-                            print name2
-                            assert (name2 != [])
-                            true = []
-                            for s in name2:
-                                true.append(re.sub(ur'[^/]+\.jpg$', name[0], s))
-                            print 'OK_PARS'+str(count)
-                            count+=1
-                            all_img = '|'.join(true)
-                        except:
-                            all_img = '|'.join(product['all_images'])
-                            print 'OK_EPN_one' + str(count)
-                            count += 1
-                    else:
-                        all_img = '|'.join(product['all_images'])
-                        print 'OK_EPN_many' + str(count)
-                        count += 1
+                    all_img = '|'.join(product['all_images'])
                     db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, product['prices']['RUR'], product['prices']['USD'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
+
+def get_all_picture():
+    all_products_list = db.query(Product).all()
+    print len(all_products_list)
+    count = 1
+    for product in all_products_list:
+        product_p = product.product_other_picture.split('|')
+        print ('Process' + str(count))
+        if len(product_p) < 2:
+            try:
+                req = requests.get(product.partner_url)
+                time.sleep(random.randint(0,5))
+                soup = BeautifulSoup.BeautifulSoup(req.text)
+                print product.partner_url
+                #print soup
+                name2 = []
+                for t in soup.findAll("span", {"class": "img-thumb-item"}):
+                    name2.append(t.next['src'])
+                name = re.findall(r'[^/]+\.jpg$', product.product_picture)
+                print name
+                print name2
+                assert (name2 != [])
+                true = []
+                for s in name2:
+                    true.append(re.sub(ur'[^/]+\.jpg$', name[0], s))
+                print 'OK_PARS'+str(count)
+                count+=1
+                product.product_other_picture = '|'.join(true)
+                db.session.add(product)
+                db.session.commit()
+            except:
+                count += 1
+        else: count += 1
 
 #print (get_products_list())
 #http://alipromo.com/redirect/cpa/o/o04p5vpi8jh1dxow2dvci6et5ijzuho1/
 
 
-db.create_all()
+#db.create_all()
 #product1 = Product('123', '44', 'name1', 'http://picture1', 'oter', 123, '123', 'title1', 'http://partner')
 #product2 = Product('1234', '44', 'name2', 'http://picture2', 'oter2', 124, '12343', 'title2', 'http://partner')
 
 #db.add(Product('123', '44', 'name1', 'http://picture1', 'oter', 123, '123', 'title1', 'http://partner'))
 #db.add(Product('1234', '44', 'name2', 'http://picture2', 'oter2', 124, '12343', 'title2', 'http://partner'))
-get_products_list()
-db.commit()
+#get_products_list()
+get_all_picture()
+#db.commit()
 #print(db.query(Product).filter_by(product_id="123").first())
 
