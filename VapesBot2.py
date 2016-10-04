@@ -352,7 +352,7 @@ class ChinaBot:
             keyboard = self.do_keybord(1, 5, 'do_picture_inline')
             if query:
                 logger.info('Inline: %s from %s @%s %s' % (query, user.first_name, user.username, user.last_name))
-                if re.findall(r'[^A-Za-z\s]', query):
+                if re.findall(r'[^A-Za-z0-9-\s]', query):
                     return
                 products = self.product_wrap(bot, update, "Search_Inline")
                 if products:
@@ -360,7 +360,7 @@ class ChinaBot:
                     for product in products:
                         if k < 50:
                             results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
-                                                                    description=Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+u'  '+Emoji.BANKNOTE_WITH_DOLLAR_SIGN.decode('utf-8')+u'  '+str(product.product_price)+u' РУБ',
+                                                                    description=Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+u'  '+Emoji.BANKNOTE_WITH_DOLLAR_SIGN.decode('utf-8')+u'  '+str(product.product_price_r)+u' РУБ',
                                                                     thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
                                                                     parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
                             k +=1
@@ -369,7 +369,7 @@ class ChinaBot:
 
     def do_search(self, bot, update):
         #self.logger_wrap(update.message, 'do_search')
-        if re.findall(r'[^A-Za-z\s]', update.message.text):
+        if re.findall(r'[^A-Za-z0-9-\s]', update.message.text):
             bot.sendMessage(update.message.chat_id, text=u'Извините, мне нечего Вам показать ' + Emoji.CONFUSED_FACE.decode('utf-8'), parse_mode=ParseMode.MARKDOWN)
             return self.del_previous(bot, update)
         self.search_query[str(update.message.chat_id)] = update.message.text
