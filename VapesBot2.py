@@ -185,13 +185,13 @@ class ChinaBot:
                 locale = self.choosen_locale[user_id]
                 if locale == 'RU':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_r) + u' РУБ\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
                 elif locale == 'EN':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
@@ -200,13 +200,13 @@ class ChinaBot:
                 locale = self.choosen_locale[user_id]
                 if locale == 'RU':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_r) + u' РУБ\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
                 elif locale == 'EN':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][1] + products.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
@@ -229,13 +229,13 @@ class ChinaBot:
                     k += 1
                 if locale == 'RU':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][1] + product.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + str(product.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_r) + u' РУБ\n'
                              u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
                 elif locale == 'EN':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][1] + product.product_store_title + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + str(product.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_u) + ' USD\n'
                              u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
@@ -661,6 +661,12 @@ class ChinaBot:
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
         else:
             self.result[id] = list(self.result[id].__reversed__())
+            a = {}
+            k = 0
+            for i in list(reversed(sorted(self.photo[id].keys()))):
+                a[str(k)] = self.photo[id][i]
+                k+=1
+            self.photo[id] = a
             keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
             bot.editMessageText(text=self.result[id][self.count[id]],
                                 chat_id=query.message.chat_id, message_id=query.message.message_id,
