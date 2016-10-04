@@ -1,5 +1,4 @@
 import requesocks, requests, BeautifulSoup
-import requesocks
 from stem import Signal
 from stem.control import Controller
 
@@ -10,8 +9,7 @@ def renew_connection():
 
 session = requesocks.session()
 # Tor uses the 9050 port as the default socks port
-session.proxies = {'http':  'socks5://127.0.0.1:9150',
-                   'https': 'socks5://127.0.0.1:9150'}
+session.proxies = {'http':  'socks5://127.0.0.1:9150', 'https': 'socks5://127.0.0.1:9150'}
 # Make a request through the Tor connection
 # IP visible through Tor
 print session.get("http://httpbin.org/ip").text
