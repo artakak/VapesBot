@@ -6,6 +6,7 @@ from stem.control import Controller
 
 db = SQLAlchemy('sqlite:///Test.db')
 
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.String(20), unique=True)
@@ -21,7 +22,6 @@ class Product(db.Model):
     partner_url = db.Column(db.String(200), unique=False)
     orders_count = db.Column(db.Integer, unique=False)
     score = db.Column(db.Integer, unique=False)
-
 
     def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_test_one_flag, product_price_r, product_price_u, product_store_id, product_store_title, partner_url, orders_count, score):
         self.product_id = product_id
@@ -66,10 +66,12 @@ def get_products_list():
                     all_img = '|'.join(product['all_images'])
                     db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, 0, product['prices']['RUR'], product['prices']['USD'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
 
+
 def renew_connection():
     with Controller.from_port(port=9151) as controller:
         controller.authenticate(password="password")
         controller.signal(Signal.NEWNYM)
+
 
 def get_all_picture():
     #session = requesocks.session()
