@@ -220,13 +220,9 @@ class ChinaBot:
                     id = str(update.callback_query.message.message_id)
                     user_id = str(update.callback_query.from_user.id)
                 locale = self.choosen_locale[user_id]
-                self.photo[id] = {}
-                k = 0
+                self.photo[id] = []
                 for product in products:
-                    self.photo[id][str(k)] = []
-                    # self.photo[str(k)].append(product.product_picture)
-                    self.photo[id][str(k)] = product.product_other_picture.split('|')
-                    k += 1
+                    self.photo[id].append(product.product_other_picture.split('|'))
                 if locale == 'RU':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(product.product_store_title) + '\n'
@@ -594,7 +590,7 @@ class ChinaBot:
         if query.data in ['PreviousP', 'PreviousP_r']:
             self.photo_count[chat_id][id] -= 2
         #bot.sendChatAction(query.message.chat_id, action=telegram.ChatAction.TYPING)
-        link = self.photo[id][str(self.count[id])]
+        link = self.photo[id][self.count[id]]
         if 0 < self.photo_count[chat_id][id] + 1 <= len(link):
             if query.data in ['PreviousP_r', 'NextP_r']:
                 keyboard = self.do_keybord(self.photo_count[chat_id][id], len(link), 'random_photo')
@@ -623,7 +619,7 @@ class ChinaBot:
         chat_id = str(query.message.chat_id)
         id = str(int(query.message.message_id)-self.offset[chat_id])
         #bot.sendChatAction(chat_id, action=telegram.ChatAction.TYPING)
-        link = self.photo[id][str(self.count[id])]
+        link = self.photo[id][self.count[id]]
         if query.data == 'Do_photo_chat':
             keyboard = self.do_keybord(0, len(link), 'picture_slide')
         elif query.data == 'Do_photo_random':
@@ -661,12 +657,7 @@ class ChinaBot:
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
         else:
             self.result[id] = list(self.result[id].__reversed__())
-            a = {}
-            k = 0
-            for i in list(reversed(sorted(self.photo[id].keys()))):
-                a[str(k)] = self.photo[id][i]
-                k+=1
-            self.photo[id] = a
+            self.photo[id] = list(self.photo[id].__reversed__())
             keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
             bot.editMessageText(text=self.result[id][self.count[id]],
                                 chat_id=query.message.chat_id, message_id=query.message.message_id,
