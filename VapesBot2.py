@@ -26,6 +26,7 @@ class Product(db.Model):
     product_name = db.Column(db.String(200), unique=False)
     product_picture = db.Column(db.String(200), unique=False)
     product_other_picture = db.Column(db.Text, unique=False)
+    product_test_one_flag = db.Column(db.Integer, unique=False)
     product_price_r = db.Column(db.Integer, unique=False)
     product_price_u = db.Column(db.Integer, unique=False)
     product_store_id = db.Column(db.String(20), unique=False)
@@ -34,12 +35,13 @@ class Product(db.Model):
     orders_count = db.Column(db.Integer, unique=False)
     score = db.Column(db.Integer, unique=False)
 
-    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_price_r, product_price_u, product_store_id, product_store_title, partner_url, orders_count, score):
+    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_test_one_flag, product_price_r, product_price_u, product_store_id, product_store_title, partner_url, orders_count, score):
         self.product_id = product_id
         self.product_cat_id = product_cat_id
         self.product_name = product_name
         self.product_picture = product_picture
         self.product_other_picture = product_other_picture
+        self.product_test_one_flag = product_test_one_flag
         self.product_price = product_price_r
         self.product_price = product_price_u
         self.product_store_id = product_store_id

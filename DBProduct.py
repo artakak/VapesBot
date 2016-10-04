@@ -57,7 +57,7 @@ def get_products_list():
                    'api_version': '2',
                    'requests':req_pull}
 
-        post_req = requests.post(post_url_api,json=post_data)
+        post_req = requests.post(post_url_api, json=post_data)
         data = json.loads(post_req.text)
         for k in result:
             print k + ': ' + str(len(data['results'][k]['offers']))
