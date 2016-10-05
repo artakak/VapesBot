@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from telegram import Emoji, ParseMode, InlineQueryResultArticle, InputTextMessageContent
+from telegram import ParseMode, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import Updater, CommandHandler, MessageHandler, InlineQueryHandler, Filters, CallbackQueryHandler, ChosenInlineResultHandler
 import telegram
 import logging
@@ -99,7 +99,19 @@ class ChinaBot:
                      'Please, choose localisation.\n')},
           'main_keyboard':
               {'RU':['TOP ', u'Наугад ', u'Поиск ', u'Помощь '],
-               'EN':['TOP ', 'Random ', 'Find ', 'Help ']}}
+               'EN':['TOP ', 'Random ', 'Find ', 'Help ']},
+          'try_search':
+              {'RU':u'Попробовать мой поиск ',
+               'EN':'Try my in-line search '},
+          'try_search_text':
+              {'RU':u'Введите ключевые слова для поиска товаров по названию, также, Вы можете использовать встроенный механизм поиска в любом чате, обратившись к боту через @ChinaVapesBot',
+               'EN':'Enter keywords to search products by name or use in-line search with @ChinaVapesBot in any chat'},
+          'selection':
+              {'RU':u'Работа с подборкой %s была завершена, спасибо ',
+               'EN':'Work with selection %s has been completed, thanks '},
+          'live_here':
+              {'RU':u'Я живу здесь ',
+               'EN':'I live HERE '}}
 
     def __init__(self, telegram, botan):
         if botan:
@@ -186,13 +198,13 @@ class ChinaBot:
                 if locale == 'RU':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_r) + u' РУБ\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
                 elif locale == 'EN':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
             elif args == 'ID':
@@ -201,13 +213,13 @@ class ChinaBot:
                 if locale == 'RU':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_r) + u' РУБ\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
                 elif locale == 'EN':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
                 self.photo[str(products[0].product_id)] = products[0].product_other_picture.split('|')
@@ -226,13 +238,13 @@ class ChinaBot:
                 if locale == 'RU':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(product.product_store_title) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐'*int(product.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_r) + u' РУБ\n'
                              u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
                 elif locale == 'EN':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(product.product_store_title) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][2] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐'*int(product.score) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_u) + ' USD\n'
                              u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
             return final
@@ -249,8 +261,8 @@ class ChinaBot:
         try:
             self.choosen_locale[user_id]
             local = self.choosen_locale[user_id]
-            custom_keyboard = [[self.ut['main_keyboard'][local][0] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), self.ut['main_keyboard'][local][1] + Emoji.GAME_DIE.decode('utf-8')],
-                               [self.ut['main_keyboard'][local][2] + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), self.ut['main_keyboard'][local][3] + Emoji.ORANGE_BOOK.decode('utf-8')]]
+            custom_keyboard = [[self.ut['main_keyboard'][local][0] + u'⭐', self.ut['main_keyboard'][local][1] + u'🎲'],
+                               [self.ut['main_keyboard'][local][2] + u'🔎', self.ut['main_keyboard'][local][3] + u'📙']]
             reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
             bot.sendMessage(chat_id, text=self.ut['hello'][self.choosen_locale[user_id]],
                             parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
@@ -262,19 +274,19 @@ class ChinaBot:
 
     def engl(self, bot, update):
         self.choosen_locale[str(update.message.from_user.id)] = 'EN'
-        custom_keyboard = [[self.ut['main_keyboard']['EN'][0] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), self.ut['main_keyboard']['EN'][1] + Emoji.GAME_DIE.decode('utf-8')],
-                           [self.ut['main_keyboard']['EN'][2] + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), self.ut['main_keyboard']['EN'][3] + Emoji.ORANGE_BOOK.decode('utf-8')]]
+        custom_keyboard = [[self.ut['main_keyboard']['EN'][0] + u'⭐', self.ut['main_keyboard']['EN'][1] + u'🎲'],
+                           [self.ut['main_keyboard']['EN'][2] + u'🔎', self.ut['main_keyboard']['EN'][3] + u'📙']]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
-        bot.sendMessage(update.message.chat_id, text=u'Language was set EN '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), reply_markup=reply_markup)
+        bot.sendMessage(update.message.chat_id, text=u'Language has been set EN 😎', reply_markup=reply_markup)
         self.del_previous(bot, update)
         self.help(bot, update)
 
     def russ(self, bot, update):
         self.choosen_locale[str(update.message.from_user.id)] = 'RU'
-        custom_keyboard = [[self.ut['main_keyboard']['RU'][0] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'), self.ut['main_keyboard']['RU'][1] + Emoji.GAME_DIE.decode('utf-8')],
-                           [self.ut['main_keyboard']['RU'][2] + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'), self.ut['main_keyboard']['RU'][3] + Emoji.ORANGE_BOOK.decode('utf-8')]]
+        custom_keyboard = [[self.ut['main_keyboard']['RU'][0] + u'⭐', self.ut['main_keyboard']['RU'][1] + u'🎲'],
+                           [self.ut['main_keyboard']['RU'][2] + u'🔎', self.ut['main_keyboard']['RU'][3] + u'📙']]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
-        bot.sendMessage(update.message.chat_id, text=u'Язык был установлен RU '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), reply_markup=reply_markup)
+        bot.sendMessage(update.message.chat_id, text=u'Язык был установлен RU 😎', reply_markup=reply_markup)
         self.del_previous(bot, update)
         self.help(bot, update)
 
@@ -305,21 +317,24 @@ class ChinaBot:
         except:
             self.start(bot, update)
             return
-        if update.message.text == self.ut['main_keyboard'][locale][0] + Emoji.WHITE_MEDIUM_STAR.decode('utf-8'):
+        if update.message.text == self.ut['main_keyboard'][locale][0] + u'⭐':
             self.top(bot, update)
-        elif update.message.text == self.ut['main_keyboard'][locale][1] + Emoji.GAME_DIE.decode('utf-8'):
+        elif update.message.text == self.ut['main_keyboard'][locale][1] + u'🎲':
             self.random(bot, update)
-        elif update.message.text == self.ut['main_keyboard'][locale][2] + Emoji.RIGHT_POINTING_MAGNIFYING_GLASS.decode('utf-8'):
+        elif update.message.text == self.ut['main_keyboard'][locale][2] + u'🔎':
             self.search(bot, update)
-        elif update.message.text == self.ut['main_keyboard'][locale][3] + Emoji.ORANGE_BOOK.decode('utf-8'):
+        elif update.message.text == self.ut['main_keyboard'][locale][3] + u'📙':
             self.help(bot, update)
         elif len(update.message.text) < 50:
             self.do_search(bot, update)
 
     def search(self, bot, update):
         #self.logger_wrap(update.message, 'search')
-        keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'Попробовать мой поиск '+Emoji.SMILING_FACE_WITH_SUNGLASSES.decode('utf-8'), switch_inline_query='ego')]])
-        bot.sendMessage(update.message.chat_id, text='Введите ключевые слова для поиска товаров по названию, также, Вы можете использовать встроенный механизм поиска в любом чате, обратившись к боту через @ChinaVapesBot',
+        try:
+            locale = self.choosen_locale[str(update.message.from_user.id)]
+        except: self.start(bot, update)
+        keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=self.ut['try_search'][locale]+u'😎', switch_inline_query='ego')]])
+        bot.sendMessage(update.message.chat_id, text=self.ut['try_search_text'][locale],
                         parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
         self.del_previous(bot, update)
 
@@ -336,7 +351,7 @@ class ChinaBot:
             m = 0
         try:
             if update.message:
-                bot.editMessageText(text=u'Работа с подборкой %s была завершена, спасибо ' % self.podbor[chat_id] + Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'),
+                bot.editMessageText(text=self.ut['selection'][self.choosen_locale[chat_id]] % self.podbor[chat_id] + u'😊',
                                     chat_id=chat_id, message_id=str(int(id)-m), parse_mode=ParseMode.MARKDOWN)
             self.photo_count[chat_id].__delitem__(str(int(id)-k))
             self.result.__delitem__(str(int(id)-k))
@@ -346,31 +361,44 @@ class ChinaBot:
 
     def inline_search(self, bot, update):
         if update.inline_query:
+            results = list()
+            try:
+                locale = self.choosen_locale[str(update.inline_query.from_user.id)]
+            except:
+                bot.answerInlineQuery(update.inline_query.id, results, switch_pm_text='Please visit to me and set localisation '+u'😊', cache_time=1)
+                return
             user = update.inline_query.from_user
             query = update.inline_query.query
-            results = list()
             keyboard = self.do_keybord(1, 5, 'do_picture_inline')
             if query:
                 logger.info('Inline: %s from %s @%s %s' % (query, user.first_name, user.username, user.last_name))
-                if re.findall(r'[^A-Za-z0-9-\s]', query):
+                if re.findall(r'[^A-Za-z0-9-\s]+', query):
                     return
                 products = self.product_wrap(bot, update, "Search_Inline")
                 if products:
                     k = 0
-                    for product in products:
-                        if k < 50:
-                            results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
-                                                                    description=Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+u'  '+Emoji.BANKNOTE_WITH_DOLLAR_SIGN.decode('utf-8')+u'  '+str(product.product_price_r)+u' РУБ',
-                                                                    thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
-                                                                    parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
-                            k +=1
-                        else: break
-        bot.answerInlineQuery(update.inline_query.id, results, switch_pm_text=u'Я живу здесь '+Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
+                    if locale == 'RU':
+                        for product in products:
+                            if k < 50:
+                                results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
+                                                                        description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_r)+u' РУБ',
+                                                                        thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
+                                                                        parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
+                                k +=1
+                    elif locale == 'EN':
+                        for product in products:
+                            if k < 50:
+                                results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
+                                                                        description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_r)+u' USD',
+                                                                        thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
+                                                                        parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
+                                k +=1
+                    bot.answerInlineQuery(update.inline_query.id, results, switch_pm_text=self.ut['live_here'][locale]+u'😊')
 
     def do_search(self, bot, update):
         #self.logger_wrap(update.message, 'do_search')
         if re.findall(r'[^A-Za-z0-9-\s]', update.message.text):
-            bot.sendMessage(update.message.chat_id, text=u'Извините, мне нечего Вам показать ' + Emoji.CONFUSED_FACE.decode('utf-8'), parse_mode=ParseMode.MARKDOWN)
+            bot.sendMessage(update.message.chat_id, text=u'Извините, мне нечего Вам показать 😕', parse_mode=ParseMode.MARKDOWN)
             return self.del_previous(bot, update)
         self.search_query[str(update.message.chat_id)] = update.message.text
         self.del_previous(bot, update)
@@ -402,7 +430,7 @@ class ChinaBot:
                     keyboard = self.do_keybord(0, len(self.result[id]), 'do_picture_chat')
                     bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             else:
-                bot.sendMessage(chat_id, text=u'Извините, мне нечего Вам показать '+Emoji.CONFUSED_FACE.decode('utf-8'),
+                bot.sendMessage(chat_id, text=u'Извините, мне нечего Вам показать 😕',
                                          parse_mode=ParseMode.MARKDOWN)
                 self.result.__delitem__(id)
         elif update.callback_query:
@@ -430,7 +458,7 @@ class ChinaBot:
                     bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN,
                             reply_markup=keyboard)
             else:
-                bot.sendMessage(chat_id, text=u'Извините, мне нечего Вам показать ' + Emoji.CONFUSED_FACE.decode('utf-8'),
+                bot.sendMessage(chat_id, text=u'Извините, мне нечего Вам показать 😕',
                         parse_mode=ParseMode.MARKDOWN)
                 self.result.__delitem__(id)
 
@@ -456,30 +484,30 @@ class ChinaBot:
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='Previous_item'),
                                                        telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
                                                        telegram.InlineKeyboardButton(text='>', callback_data='Next_item')],
-                                                       [telegram.InlineKeyboardButton(text=Emoji.CAMERA.decode('utf-8'), callback_data='Do_photo_chat'),
-                                                        telegram.InlineKeyboardButton(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8'), callback_data='Like')]])
+                                                       [telegram.InlineKeyboardButton(text=u'📷', callback_data='Do_photo_chat'),
+                                                        telegram.InlineKeyboardButton(text=u'❤', callback_data='Like')]])
         elif flag == 'picture_slide':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP'),
                                                        telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
                                                        telegram.InlineKeyboardButton(text='>', callback_data='NextP'),
-                                                       telegram.InlineKeyboardButton(text=Emoji.CROSS_MARK.decode('utf-8'), callback_data='X_c')]])
+                                                       telegram.InlineKeyboardButton(text=u'❌', callback_data='X_c')]])
 
         elif flag == 'random_photo':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP_r'),
                                                        telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
                                                        telegram.InlineKeyboardButton(text='>', callback_data='NextP_r'),
-                                                       telegram.InlineKeyboardButton(text=Emoji.CROSS_MARK.decode('utf-8'), callback_data='X_r')]])
+                                                       telegram.InlineKeyboardButton(text=u'❌', callback_data='X_r')]])
         elif flag == 'do_picture_inline':
-            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'Фотографии', callback_data='Do_photo')]])
+            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'📷', callback_data='Do_photo')]])
         elif flag == 'picture_slide_inline':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP_in'),
                                                        telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
                                                        telegram.InlineKeyboardButton(text='>', callback_data='NextP_in'),
-                                                       telegram.InlineKeyboardButton(text=Emoji.CROSS_MARK.decode('utf-8'), callback_data='X_i')]])
+                                                       telegram.InlineKeyboardButton(text=u'❌', callback_data='X_i')]])
         elif flag == 'random':
-            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=Emoji.GAME_DIE.decode('utf-8'), callback_data='More_random'),
-                                                       telegram.InlineKeyboardButton(text=Emoji.CAMERA.decode('utf-8'), callback_data='Do_photo_random'),
-                                                       telegram.InlineKeyboardButton(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8'), callback_data='LikeR')]])
+            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'🎲', callback_data='More_random'),
+                                                       telegram.InlineKeyboardButton(text=u'📷', callback_data='Do_photo_random'),
+                                                       telegram.InlineKeyboardButton(text=u'❤', callback_data='LikeR')]])
         return keyboard
 
     def inline_picture(self, bot, update):
@@ -498,7 +526,7 @@ class ChinaBot:
             self.random(bot, update)
         if query.data == '1':
             bot.answerCallbackQuery(callback_query_id=str(query.id),
-                                    text=u'Не жмакайте мне там, щекотно ' + Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
+                                    text=u'Не жмакайте мне там, щекотно 😂')
         if query.data in ['Do_photo_chat', 'Do_photo_random']:
             self.photog(bot, update)
         if query.data == 'Next_item':
@@ -517,13 +545,13 @@ class ChinaBot:
                 keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'random')
             else:
                 keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
-            bot.editMessageText(text=Emoji.HEAVY_BLACK_HEART.decode('utf-8')+'\n'+self.like[chat_id],
+            bot.editMessageText(text=u'❤\n'+self.like[chat_id],
                                 chat_id=query.message.chat_id, message_id=query.message.message_id,
                                 parse_mode=ParseMode.MARKDOWN)
             bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN,
                                 reply_markup=keyboard)
             bot.answerCallbackQuery(callback_query_id=str(query.id),
-                                    text=u'Отложил в чатик ' + Emoji.SMILING_FACE_WITH_SMILING_EYES.decode('utf-8'))
+                                    text=u'Отложил в чатик 😊')
             self.offset[chat_id]+=1
         if query.data in ['X_r', 'X_c']:
             chat_id = str(query.message.chat_id)
@@ -543,7 +571,7 @@ class ChinaBot:
             self.photo_count[id] = 0
             link = self.photo[id]
             keyboard = self.do_keybord(self.photo_count[id], len(self.photo[id]), 'picture_slide_inline')
-            bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count[id]]) + ')',
+            bot.editMessageText(text=u'[☁](' + str(link[self.photo_count[id]]) + ')',
                                 inline_message_id=query.inline_message_id,
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             self.photo_count[id] += 1
@@ -566,7 +594,7 @@ class ChinaBot:
         link = self.photo[id]
         if 0 < self.photo_count[id] + 1 <= len(link):
             keyboard = self.do_keybord(self.photo_count[id], len(link), 'picture_slide_inline')
-            bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count[id]]) + ')',
+            bot.editMessageText(text=u'[☁](' + str(link[self.photo_count[id]]) + ')',
                                 inline_message_id=query.inline_message_id,
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             self.photo_count[id] += 1
@@ -574,11 +602,11 @@ class ChinaBot:
             self.photo_count[id] = 0
             keyboard = self.do_keybord(self.photo_count[id], len(link), 'picture_slide_inline')
             try:
-                bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count[id]]) + ')',
+                bot.editMessageText(text=u'[☁](' + str(link[self.photo_count[id]]) + ')',
                                     inline_message_id=query.inline_message_id,
                                     parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             except:
-                bot.answerCallbackQuery(callback_query_id=str(query.id), text=u'Извините, но мне туда нельзя ' + Emoji.CONFUSED_FACE.decode('utf-8'))
+                bot.answerCallbackQuery(callback_query_id=str(query.id), text=u'Извините, но мне туда нельзя 😕')
             finally:
                 self.photo_count[id] += 1
 
@@ -596,7 +624,7 @@ class ChinaBot:
                 keyboard = self.do_keybord(self.photo_count[chat_id][id], len(link), 'random_photo')
             else:
                 keyboard = self.do_keybord(self.photo_count[chat_id][id],len(link), 'picture_slide')
-            bot.editMessageText(text=u'['+Emoji.CLOUD.decode('utf-8')+']('+str(link[self.photo_count[chat_id][id]])+')',
+            bot.editMessageText(text=u'[☁]('+str(link[self.photo_count[chat_id][id]])+')',
                                 chat_id=query.message.chat_id, message_id=query.message.message_id, parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             self.photo_count[chat_id][id] +=1
         else:
@@ -606,11 +634,11 @@ class ChinaBot:
                     keyboard = self.do_keybord(self.photo_count[chat_id][id], len(link), 'random_photo')
                 else:
                     keyboard = self.do_keybord(self.photo_count[chat_id][id], len(link), 'picture_slide')
-                bot.editMessageText(text=u'[' + Emoji.CLOUD.decode('utf-8') + '](' + str(link[self.photo_count[chat_id][id]]) + ')',
+                bot.editMessageText(text=u'[☁](' + str(link[self.photo_count[chat_id][id]]) + ')',
                                     chat_id=query.message.chat_id, message_id=query.message.message_id,
                                     parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             except:
-                bot.answerCallbackQuery(callback_query_id=str(query.id), text=u'Извините, но мне туда нельзя '+Emoji.CONFUSED_FACE.decode('utf-8'))
+                bot.answerCallbackQuery(callback_query_id=str(query.id), text=u'Извините, но мне туда нельзя ?')
             finally: self.photo_count[chat_id][id] += 1
 
     def photog(self, bot, update):
@@ -624,7 +652,7 @@ class ChinaBot:
             keyboard = self.do_keybord(0, len(link), 'picture_slide')
         elif query.data == 'Do_photo_random':
             keyboard = self.do_keybord(0, len(link), 'random_photo')
-        bot.editMessageText(text=u'['+Emoji.CLOUD.decode('utf-8')+']('+str(link[0])+')',
+        bot.editMessageText(text=u'[☁]('+str(link[0])+')',
                             chat_id=query.message.chat_id, message_id=query.message.message_id,
                             reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
 
@@ -641,7 +669,7 @@ class ChinaBot:
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
         except:
             self.count[id] -= 1
-            bot.answerCallbackQuery(callback_query_id=str(query.id), text=u'Извините, но мне туда нельзя ' + Emoji.CONFUSED_FACE.decode('utf-8'))
+            bot.answerCallbackQuery(callback_query_id=str(query.id), text=u'Извините, но мне туда нельзя ?')
             #self.start(bot, update)
 
     def get_previous(self, bot, update):
@@ -663,7 +691,7 @@ class ChinaBot:
                                 chat_id=query.message.chat_id, message_id=query.message.message_id,
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             bot.answerCallbackQuery(callback_query_id=str(query.id),
-                                    text=u'Произведена смена сортировки по цене ' + Emoji.WARNING_SIGN.decode('utf-8'))
+                                    text=u'Произведена смена сортировки по цене ⚠')
             #self.start(bot, update)
 
     def close(self, bot, update):

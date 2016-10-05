@@ -27,22 +27,26 @@ class Product(db.Model):
     product_id = db.Column(db.String(20), unique=True)
     product_cat_id = db.Column(db.String(10), unique=False)
     product_name = db.Column(db.String(200), unique=False)
-    product_picture = db.Column(db.String(200), unique=True)
+    product_picture = db.Column(db.String(200), unique=False)
     product_other_picture = db.Column(db.Text, unique=False)
-    product_price = db.Column(db.Integer, unique=False)
+    product_test_one_flag = db.Column(db.Integer, unique=False)
+    product_price_r = db.Column(db.Integer, unique=False)
+    product_price_u = db.Column(db.Integer, unique=False)
     product_store_id = db.Column(db.String(20), unique=False)
     product_store_title = db.Column(db.String(20), unique=False)
     partner_url = db.Column(db.String(200), unique=False)
     orders_count = db.Column(db.Integer, unique=False)
     score = db.Column(db.Integer, unique=False)
 
-    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_price, product_store_id, product_store_title, partner_url, orders_count, score):
+    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_test_one_flag, product_price_r, product_price_u, product_store_id, product_store_title, partner_url, orders_count, score):
         self.product_id = product_id
         self.product_cat_id = product_cat_id
         self.product_name = product_name
         self.product_picture = product_picture
         self.product_other_picture = product_other_picture
-        self.product_price = product_price
+        self.product_test_one_flag = product_test_one_flag
+        self.product_price = product_price_r
+        self.product_price = product_price_u
         self.product_store_id = product_store_id
         self.product_store_title = product_store_title
         self.partner_url = partner_url
@@ -122,13 +126,13 @@ class ChinaBot:
                 products = db.query(Product).filter_by(id=random.randint(1, count)).limit(10).all()
             elif args == 'Search_Down':
                 string = str(self.search_query[str(update.message.chat_id)])
-                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price.desc()).all()
+                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price_r.desc()).all()
             elif args == 'Search_Up':
                 string = str(self.search_query[str(update.message.chat_id)])
-                products = db.query(Product).filter(Product.product_name.contains("%"+string+"%")).order_by(Product.product_price).all()
+                products = db.query(Product).filter(Product.product_name.contains("%"+string+"%")).order_by(Product.product_price_r).all()
             elif args == 'Search_Inline':
                 string = str(update.inline_query.query)
-                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price).all()
+                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price_r).all()
             elif args == 'ID':
                 try: string = str(update.chosen_inline_result.result_id)
                 except: string = self.answer[str(update.callback_query.inline_message_id)]
@@ -147,15 +151,15 @@ class ChinaBot:
         final = None
         if args == 'Search_Inline':
             final = [u'*Наименование*: ' + products.product_name + '\n'
-                     u'*Магазин*: ' + products.product_store_title + '\n'
+                     u'*Магазин*: ' + str(products.product_store_title) + '\n'
                      u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products.score) + '\n'
-                     u'*Цена*: ' + str(products.product_price) + u' РУБ\n'
+                     u'*Цена*: ' + str(products.product_price_r) + u' РУБ\n'
                      u'[ЗАКАЗАТЬ]' + '(' + products.partner_url + ')\n']
         elif args == 'ID':
             final = [u'*Наименование*: ' + products[0].product_name + '\n'
-                     u'*Магазин*: ' + products[0].product_store_title + '\n'
+                     u'*Магазин*: ' + str(products[0].product_store_title) + '\n'
                      u'*Рейтинг*: ' + Emoji.WHITE_MEDIUM_STAR.decode('utf-8') * int(products[0].score) + '\n'
-                     u'*Цена*: ' + str(products[0].product_price) + u' РУБ\n'
+                     u'*Цена*: ' + str(products[0].product_price_r) + u' РУБ\n'
                      u'[ЗАКАЗАТЬ]' + '(' + products[0].partner_url + ')\n']
             self.photo[str(products[0].product_id)] = products[0].product_other_picture.split('|')
             return final
@@ -168,9 +172,9 @@ class ChinaBot:
                 self.photo[str(update.message.chat_id)][str(k)] = product.product_other_picture.split('|')
                 k += 1
             final = [u'*Наименование*: '+product.product_name+'\n'
-                     u'*Магазин*: '+product.product_store_title+'\n'
+                     u'*Магазин*: '+str(product.product_store_title)+'\n'
                      u'*Рейтинг*: '+Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+'\n'
-                     u'*Цена*: '+str(product.product_price)+u' РУБ\n'
+                     u'*Цена*: '+str(product.product_price_r)+u' РУБ\n'
                      u'[ЗАКАЗАТЬ]'+'('+product.partner_url+')\n' for product in products]
         return final
 
@@ -211,11 +215,12 @@ class ChinaBot:
                     for product in products:
                         if k < 50:
                             results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
-                                                                    description=Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+u'  '+Emoji.BANKNOTE_WITH_DOLLAR_SIGN.decode('utf-8')+u'  '+str(product.product_price)+u' РУБ',
+                                                                    description=Emoji.WHITE_MEDIUM_STAR.decode('utf-8')*int(product.score)+u'  '+Emoji.BANKNOTE_WITH_DOLLAR_SIGN.decode('utf-8')+u'  '+str(product.product_price_r)+u' РУБ',
                                                                     thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
                                                                     parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
                             k +=1
                         else: break
+        asd = results
         bot.answerInlineQuery(update.inline_query.id, results)
 
     def command_filter(self, bot, update):
