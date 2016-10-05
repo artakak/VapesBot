@@ -208,20 +208,23 @@ class ChinaBot:
                              u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
             elif args == 'ID':
-                user_id = str(update.chosen_inline_result.from_user.id)
+                try:
+                    user_id = str(update.chosen_inline_result.from_user.id)
+                except:
+                    user_id = str(update.callback_query.from_user.id)
                 locale = self.choosen_locale[user_id]
                 if locale == 'RU':
-                    final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products.score) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_r) + u' РУБ\n'
-                             u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
+                    final = [u'*%s*: ' % self.ut['product'][locale][0] + products[0].product_name + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + str(products[0].product_store_title) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products[0].score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products[0].product_price_r) + u' РУБ\n'
+                             u'[%s]' % self.ut['product'][locale][4] + '(' + products[0].partner_url + ')\n']
                 elif locale == 'EN':
-                    final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products.score) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD\n'
-                             u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
+                    final = [u'*%s*: ' % self.ut['product'][locale][0] + products[0].product_name + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][1] + str(products[0].product_store_title) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products[0].score) + '\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products[0].product_price_u) + ' USD\n'
+                             u'[%s]' % self.ut['product'][locale][4] + '(' + products[0].partner_url + ')\n']
                 self.photo[str(products[0].product_id)] = products[0].product_other_picture.split('|')
                 return final
             else:
@@ -267,7 +270,7 @@ class ChinaBot:
             bot.sendMessage(chat_id, text=self.ut['hello'][self.choosen_locale[user_id]],
                             parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
         except:
-            custom_keyboard = [['/RU', '/EN']]
+            custom_keyboard = [[u'🇷🇺', u'🇬🇧']]
             reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
             bot.sendMessage(chat_id, text=(self.ut['hello_lang']['EN']+self.ut['hello_lang']['RU']), parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
         self.del_previous(bot, update)
@@ -312,6 +315,12 @@ class ChinaBot:
 
     def command_filter(self, bot, update):
         self.logger_wrap(update.message, 'command_filter')
+        if update.message.text == u'🇷🇺':
+            self.russ(bot,update)
+            return
+        elif update.message.text == u'🇬🇧':
+            self.engl(bot,update)
+            return
         try:
             locale = self.choosen_locale[str(update.message.from_user.id)]
         except:
