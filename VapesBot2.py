@@ -120,7 +120,7 @@ class ChinaBot:
 
         self.updater = Updater(telegram)
         dp = self.updater.dispatcher
-        dp.add_handler(CommandHandler('start', self.start))
+        dp.add_handler(CommandHandler('start', self.start, pass_args=True))
         dp.add_handler(CommandHandler('close', self.start))
         dp.add_handler(CommandHandler('previous', self.get_previous))
         dp.add_handler(CommandHandler('next', self.get_next))
@@ -148,6 +148,7 @@ class ChinaBot:
         self.offset = {}
         self.podbor = {}
         self.choosen_locale = {}
+        self.inline = {}
 
     def logger_wrap(self, message, command):
         if self.botan:
@@ -252,7 +253,7 @@ class ChinaBot:
                              u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
             return final
 
-    def start(self, bot, update):
+    def start(self, bot, update, args):
         try:
             self.logger_wrap(update.message, 'start')
             chat_id = str(update.message.chat_id)
@@ -270,6 +271,11 @@ class ChinaBot:
             bot.sendMessage(chat_id, text=self.ut['hello'][self.choosen_locale[user_id]],
                             parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
         except:
+            try:
+                if args[0] == 'from_inline':
+                    self.inline[chat_id] = 1
+            except:
+                self.inline[chat_id] = 0
             custom_keyboard = [[u'🇷🇺', u'🇬🇧']]
             reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
             bot.sendMessage(chat_id, text=(self.ut['hello_lang']['EN']+self.ut['hello_lang']['RU']), parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
@@ -279,16 +285,23 @@ class ChinaBot:
         self.choosen_locale[str(update.message.from_user.id)] = 'EN'
         custom_keyboard = [[self.ut['main_keyboard']['EN'][0] + u'⭐', self.ut['main_keyboard']['EN'][1] + u'🎲'],
                            [self.ut['main_keyboard']['EN'][2] + u'🔎', self.ut['main_keyboard']['EN'][3] + u'📙']]
-        reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
+        if self.inline[str(update.message.chat_id)] == 1:
+            reply_markup = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='Return to chat', switch_inline_query='')]])
+        else:
+            reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
         bot.sendMessage(update.message.chat_id, text=u'Language has been set EN 😎', reply_markup=reply_markup)
         self.del_previous(bot, update)
         self.help(bot, update)
+
 
     def russ(self, bot, update):
         self.choosen_locale[str(update.message.from_user.id)] = 'RU'
         custom_keyboard = [[self.ut['main_keyboard']['RU'][0] + u'⭐', self.ut['main_keyboard']['RU'][1] + u'🎲'],
                            [self.ut['main_keyboard']['RU'][2] + u'🔎', self.ut['main_keyboard']['RU'][3] + u'📙']]
-        reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
+        if self.inline[str(update.message.chat_id)] == 1:
+            reply_markup = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='Return to chat', switch_inline_query='')]])
+        else:
+            reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
         bot.sendMessage(update.message.chat_id, text=u'Язык был установлен RU 😎', reply_markup=reply_markup)
         self.del_previous(bot, update)
         self.help(bot, update)
@@ -370,7 +383,8 @@ class ChinaBot:
             try:
                 locale = self.choosen_locale[str(update.inline_query.from_user.id)]
             except:
-                bot.answerInlineQuery(update.inline_query.id, results, switch_pm_text='Please visit to me and set localisation '+u'😊', cache_time=1)
+                bot.answerInlineQuery(update.inline_query.id, results, switch_pm_text='Please visit to me and set localisation '+u'😊', cache_time=1,
+                                      switch_pm_parameter='from_inline')
                 return
             user = update.inline_query.from_user
             query = update.inline_query.query
