@@ -336,6 +336,8 @@ class ChinaBot:
             self.help(bot, update)
         elif len(update.message.text) < 50:
             self.do_search(bot, update)
+        else:
+            self.del_previous(bot, update)
 
     def search(self, bot, update):
         #self.logger_wrap(update.message, 'search')
@@ -350,22 +352,16 @@ class ChinaBot:
     def del_previous(self, bot, update):
         if update.message:
             chat_id = str(update.message.chat_id)
-            id = str(update.message.message_id)
-            k = 2
-            m =1
         elif update.callback_query:
             chat_id = str(update.callback_query.message.chat_id)
-            id = str(update.callback_query.message.message_id)
-            k = 1
-            m = 0
         try:
             if update.message:
-                bot.editMessageText(text=self.ut['selection'][self.choosen_locale[chat_id]] % self.podbor[chat_id] + u'😊',
-                                    chat_id=chat_id, message_id=str(int(id)-m), parse_mode=ParseMode.MARKDOWN)
-            self.photo_count[chat_id].__delitem__(str(int(id)-k))
-            self.result.__delitem__(str(int(id)-k))
-            self.photo.__delitem__(str(int(id)-k))
-            self.count.__delitem__(str(int(id)-k))
+                bot.editMessageText(text=self.ut['selection'][self.choosen_locale[chat_id]] % self.podbor[chat_id][0] + u'😊',
+                                    chat_id=chat_id, message_id=str(int(self.podbor[chat_id][1])+self.offset[chat_id]), parse_mode=ParseMode.MARKDOWN)
+            self.photo_count[chat_id].__delitem__(self.podbor[chat_id][1])
+            self.result.__delitem__(self.podbor[chat_id][1])
+            self.photo.__delitem__(self.podbor[chat_id][1])
+            self.count.__delitem__(self.podbor[chat_id][1])
         except: pass
 
     def inline_search(self, bot, update):
@@ -412,7 +408,7 @@ class ChinaBot:
         self.search_query[str(update.message.chat_id)] = update.message.text
         self.del_previous(bot, update)
         self.give(bot, update, 'Search_Down')
-        self.podbor[str(update.message.chat_id)] = '/find'
+        self.podbor[str(update.message.chat_id)] = ['/find', str(update.message.message_id)]
 
     def give(self, bot, update, args):
         if update.message:
@@ -475,18 +471,21 @@ class ChinaBot:
         self.logger_wrap(update.message, 'top')
         self.del_previous(bot, update)
         self.give(bot, update, 'TOP_Down')
-        self.podbor[str(update.message.chat_id)] = '/TOP'
+        self.podbor[str(update.message.chat_id)] = ['/TOP', str(update.message.message_id)]
 
     def random(self, bot, update):
         if update.message:
             self.logger_wrap(update.message, 'random')
-            chat_id = update.message.chat_id
+            chat_id = str(update.message.chat_id)
+            self.del_previous(bot, update)
+            self.give(bot, update, 'Random')
+            self.podbor[chat_id] = ['/random', str(update.message.message_id)]
         elif update.callback_query:
             self.logger_wrap(update.callback_query.message, 'random')
-            chat_id = update.callback_query.message.chat_id
-        self.del_previous(bot, update)
-        self.give(bot, update, 'Random')
-        self.podbor[str(chat_id)] = '/random'
+            chat_id = str(update.callback_query.message.chat_id)
+            self.del_previous(bot, update)
+            self.give(bot, update, 'Random')
+            self.podbor[chat_id] = ['/random', str(update.callback_query.message.message_id)]
 
     def do_keybord(self, current, total, flag):
         if flag == 'do_picture_chat':
