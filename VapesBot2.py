@@ -291,6 +291,7 @@ class ChinaBot:
             reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
         bot.sendMessage(update.message.chat_id, text=u'Language has been set EN 😎', reply_markup=reply_markup)
         self.del_previous(bot, update)
+        self.start(bot, update, args=None)
         self.help(bot, update)
 
 
@@ -304,6 +305,7 @@ class ChinaBot:
             reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
         bot.sendMessage(update.message.chat_id, text=u'Язык был установлен RU 😎', reply_markup=reply_markup)
         self.del_previous(bot, update)
+        self.start(bot, update, args=None)
         self.help(bot, update)
 
     def help(self, bot, update):
@@ -311,7 +313,7 @@ class ChinaBot:
         try:
             local = self.choosen_locale[str(update.message.from_user.id)]
         except:
-            self.start(bot, update)
+            self.start(bot, update, args=None)
             return
         bot.sendMessage(update.message.chat_id, text=self.ut['help'][local])
         self.del_previous(bot, update)
@@ -321,7 +323,7 @@ class ChinaBot:
         try:
             local = self.choosen_locale[str(update.message.from_user.id)]
         except:
-            self.start(bot, update)
+            self.start(bot, update, args=None)
             return
         bot.sendMessage(update.message.chat_id, text=self.ut['hello'][local], parse_mode=ParseMode.MARKDOWN)
         self.del_previous(bot, update)
@@ -337,7 +339,7 @@ class ChinaBot:
         try:
             locale = self.choosen_locale[str(update.message.from_user.id)]
         except:
-            self.start(bot, update)
+            self.start(bot, update, args=None)
             return
         if update.message.text == self.ut['main_keyboard'][locale][0] + u'⭐':
             self.top(bot, update)
@@ -356,7 +358,7 @@ class ChinaBot:
         #self.logger_wrap(update.message, 'search')
         try:
             locale = self.choosen_locale[str(update.message.from_user.id)]
-        except: self.start(bot, update)
+        except: self.start(bot, update, args=None)
         keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=self.ut['try_search'][locale]+u'😎', switch_inline_query='ego')]])
         bot.sendMessage(update.message.chat_id, text=self.ut['try_search_text'][locale],
                         parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
@@ -429,7 +431,7 @@ class ChinaBot:
             try:
                 self.choosen_locale[str(update.message.from_user.id)]
             except:
-                self.start(bot, update)
+                self.start(bot, update, args=None)
                 return
             #self.logger_wrap(update.message, 'give')
             #telegram.ReplyKeyboardHide(hide_keyboard=True)
@@ -457,7 +459,7 @@ class ChinaBot:
             try:
                 self.choosen_locale[str(update.callback_query.from_user.id)]
             except:
-                self.start(bot, update)
+                self.start(bot, update, args=None)
                 return
             # telegram.ReplyKeyboardHide(hide_keyboard=True)
             id = str(update.callback_query.message.message_id)
@@ -521,6 +523,8 @@ class ChinaBot:
                                                        telegram.InlineKeyboardButton(text=u'❌', callback_data='X_r')]])
         elif flag == 'do_picture_inline':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'📷', callback_data='Do_photo')]])
+        elif flag == 'do_picture_like':
+            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'📷', callback_data='Do_photo_like')]])
         elif flag == 'picture_slide_inline':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP_in'),
                                                        telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
@@ -562,14 +566,16 @@ class ChinaBot:
         if query.data in ['Like', 'LikeR']:
             chat_id = str(query.message.chat_id)
             id = str(int(query.message.message_id) - self.offset[chat_id])
-            self.like[chat_id] = self.result[id][self.count[id]]
+            self.like[chat_id] = {str(query.message.message_id): {'photo': self.photo[id], 'count': 0}}
             if query.data == 'LikeR':
                 keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'random')
             else:
                 keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
-            bot.editMessageText(text=u'❤\n'+self.like[chat_id],
+            keyboard_in = self.do_keybord(1, 5, 'do_picture_like')
+            bot.editMessageText(text=u'❤\n'+self.result[id][self.count[id]],
                                 chat_id=query.message.chat_id, message_id=query.message.message_id,
-                                parse_mode=ParseMode.MARKDOWN)
+                                parse_mode=ParseMode.MARKDOWN,
+                                reply_markup=keyboard_in)
             bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN,
                                 reply_markup=keyboard)
             bot.answerCallbackQuery(callback_query_id=str(query.id),
@@ -722,9 +728,9 @@ class ChinaBot:
             self.count[str(update.message.chat_id)] = 0
             self.result[str(update.message.chat_id)] = []
             self.search_query[str(update.message.chat_id)] = ''
-            self.start(bot, update)
+            self.start(bot, update, args=None)
         except:
-            self.start(bot, update)
+            self.start(bot, update, args=None)
 
     def unknow(self, bot, update):
         self.logger_wrap(update.message, 'unknow')
