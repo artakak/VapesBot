@@ -571,11 +571,10 @@ class ChinaBot:
                 keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'random')
             else:
                 keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'do_picture_chat')
-            keyboard_in = self.do_keybord(1, 5, 'do_picture_like')
+            #keyboard_in = self.do_keybord(1, 5, 'do_picture_like')
             bot.editMessageText(text=u'❤\n'+self.result[id][self.count[id]],
                                 chat_id=query.message.chat_id, message_id=query.message.message_id,
-                                parse_mode=ParseMode.MARKDOWN,
-                                reply_markup=keyboard_in)
+                                parse_mode=ParseMode.MARKDOWN)
             bot.sendMessage(chat_id, text=self.result[id][self.count[id]], parse_mode=ParseMode.MARKDOWN,
                                 reply_markup=keyboard)
             bot.answerCallbackQuery(callback_query_id=str(query.id),
@@ -746,10 +745,10 @@ class ChinaBot:
 
 def main():
     try:
-        bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
-        botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
-        #bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
-        #botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
+        #bot_token = '219477880:AAFt3Mug_afgVZdwR-ZWFSMJuUbUBQjM5Mk'
+        #botan_token = 'UGbapiL6McQPN02FfOy9iTdCNOa9l9E9'
+        bot_token = '207682614:AAHfnPbjo4RTAgov8cfEo3erRTLvmx43Ffg'
+        botan_token = 'A6C6UgwxORRchQbmFkqHJl56SmL-G4iy'
 
     except Exception as e:
         logger.exception(e)
