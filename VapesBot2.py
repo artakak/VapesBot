@@ -598,7 +598,7 @@ class ChinaBot:
             self.photo_count[id] = 0
             link = self.photo[id]
             keyboard = self.do_keybord(self.photo_count[id], len(self.photo[id]), 'picture_slide_inline')
-            bot.editMessageText(text=u'[☁](' + str(link[self.photo_count[id]]) + ')',
+            bot.editMessageText(text=u'[📷](' + str(link[self.photo_count[id]]) + ')',
                                 inline_message_id=query.inline_message_id,
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             self.photo_count[id] += 1
@@ -621,7 +621,7 @@ class ChinaBot:
         link = self.photo[id]
         if 0 < self.photo_count[id] + 1 <= len(link):
             keyboard = self.do_keybord(self.photo_count[id], len(link), 'picture_slide_inline')
-            bot.editMessageText(text=u'[☁](' + str(link[self.photo_count[id]]) + ')',
+            bot.editMessageText(text=u'[📷](' + str(link[self.photo_count[id]]) + ')',
                                 inline_message_id=query.inline_message_id,
                                 parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             self.photo_count[id] += 1
@@ -629,7 +629,7 @@ class ChinaBot:
             self.photo_count[id] = 0
             keyboard = self.do_keybord(self.photo_count[id], len(link), 'picture_slide_inline')
             try:
-                bot.editMessageText(text=u'[☁](' + str(link[self.photo_count[id]]) + ')',
+                bot.editMessageText(text=u'[📷](' + str(link[self.photo_count[id]]) + ')',
                                     inline_message_id=query.inline_message_id,
                                     parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             except:
@@ -651,7 +651,7 @@ class ChinaBot:
                 keyboard = self.do_keybord(self.photo_count[chat_id][id], len(link), 'random_photo')
             else:
                 keyboard = self.do_keybord(self.photo_count[chat_id][id],len(link), 'picture_slide')
-            bot.editMessageText(text=u'[☁]('+str(link[self.photo_count[chat_id][id]])+')',
+            bot.editMessageText(text=u'[📷]('+str(link[self.photo_count[chat_id][id]])+')',
                                 chat_id=query.message.chat_id, message_id=query.message.message_id, parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             self.photo_count[chat_id][id] +=1
         else:
@@ -661,7 +661,7 @@ class ChinaBot:
                     keyboard = self.do_keybord(self.photo_count[chat_id][id], len(link), 'random_photo')
                 else:
                     keyboard = self.do_keybord(self.photo_count[chat_id][id], len(link), 'picture_slide')
-                bot.editMessageText(text=u'[☁](' + str(link[self.photo_count[chat_id][id]]) + ')',
+                bot.editMessageText(text=u'[📷](' + str(link[self.photo_count[chat_id][id]]) + ')',
                                     chat_id=query.message.chat_id, message_id=query.message.message_id,
                                     parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
             except:
@@ -679,7 +679,7 @@ class ChinaBot:
             keyboard = self.do_keybord(0, len(link), 'picture_slide')
         elif query.data == 'Do_photo_random':
             keyboard = self.do_keybord(0, len(link), 'random_photo')
-        bot.editMessageText(text=u'[☁]('+str(link[0])+')',
+        bot.editMessageText(text=u'[📷]('+str(link[0])+')',
                             chat_id=query.message.chat_id, message_id=query.message.message_id,
                             reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
 
