@@ -524,7 +524,7 @@ class ChinaBot:
         elif flag == 'do_picture_inline':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'📷', callback_data='Do_photo')]])
         elif flag == 'do_picture_like':
-            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'📷', callback_data='Do_photo_like')]])
+            keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text=u'>>>❤<<<', callback_data='Favor')]])
         elif flag == 'picture_slide_inline':
             keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(text='<', callback_data='PreviousP_in'),
                                                        telegram.InlineKeyboardButton(text=str(current + 1) + u' ИЗ ' + str(total), callback_data='1'),
@@ -566,7 +566,7 @@ class ChinaBot:
         if query.data in ['Like', 'LikeR']:
             chat_id = str(query.message.chat_id)
             id = str(int(query.message.message_id) - self.offset[chat_id])
-            self.like[chat_id] = {str(query.message.message_id): {'photo': self.photo[id], 'count': 0}}
+            #self.like[chat_id] = {'text': u'❤\n'+self.result[id][self.count[id]], 'photo': self.photo[self.podbor[chat_id][1]][self.count[self.podbor[chat_id][1]]], 'count': 0}
             if query.data == 'LikeR':
                 keyboard = self.do_keybord(int(self.count[id]), len(self.result[id]), 'random')
             else:
