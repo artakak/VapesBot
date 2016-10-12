@@ -147,6 +147,7 @@ class ChinaBot:
         self.podbor = {}
         self.choosen_locale = {}
         self.inline = {}
+        self.inline_list = {}
 
     def logger_wrap(self, message, command):
         if self.botan:
@@ -173,7 +174,7 @@ class ChinaBot:
                 products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price_u.desc()).all()
             elif args == 'Search_Inline':
                 string = str(update.inline_query.query)
-                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price_u).all()
+                products = db.query(Product).filter(Product.product_name.contains("%" + string + "%")).order_by(Product.product_price_u.desc()).all()
             elif args == 'ID':
                 try: string = str(update.chosen_inline_result.result_id)
                 except: string = self.answer[str(update.callback_query.inline_message_id)]
@@ -379,6 +380,9 @@ class ChinaBot:
 
     def inline_search(self, bot, update):
         if update.inline_query:
+            if update.inline_query.offset == 'next_page':
+                self.pagination(bot, update)
+                return
             results = list()
             try:
                 locale = self.choosen_locale[str(update.inline_query.from_user.id)]
@@ -395,24 +399,36 @@ class ChinaBot:
                     return
                 products = self.product_wrap(bot, update, "Search_Inline")
                 if products:
-                    k = 0
                     if locale == 'RU':
                         for product in products:
-                            if k < 50:
-                                results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
-                                                                        description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_r)+u' РУБ',
-                                                                        thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
-                                                                        parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
-                                k +=1
+                            results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
+                                                                    description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_r)+u' РУБ',
+                                                                    thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
+                                                                    parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
                     elif locale == 'EN':
                         for product in products:
-                            if k < 50:
-                                results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
-                                                                        description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_r)+u' USD',
-                                                                        thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
-                                                                        parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
-                                k +=1
-                    bot.answerInlineQuery(update.inline_query.id, results, switch_pm_text=self.ut['live_here'][locale]+u'😊')
+                            results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
+                                                                    description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_u)+u' USD',
+                                                                    thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
+                                                                    parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
+
+                    self.inline_list[str(update.inline_query.from_user.id)] = [1, len(results)/50]
+                    self.inline_list[str(update.inline_query.from_user.id)].append(results)
+                    resultss = results[0:50]
+                    bot.answerInlineQuery(update.inline_query.id, results[0:50], switch_pm_text=self.ut['live_here'][locale]+u'😊', next_offset='next_page')
+
+    def pagination(self, bot, update):
+        print 'pagination'
+        locale = self.choosen_locale[str(update.inline_query.from_user.id)]
+        current = self.inline_list[str(update.inline_query.from_user.id)][0]
+        total = self.inline_list[str(update.inline_query.from_user.id)][1]
+        if current >= total:
+            print 'end'
+            return
+        results = list(self.inline_list[str(update.inline_query.from_user.id)][2][(50*current):(50*current+50)])
+        bot.answerInlineQuery(update.inline_query.id, results[0:50], switch_pm_text=self.ut['live_here'][locale] + u'😊', next_offset='next_page')
+        print 'next 50'
+        self.inline_list[str(update.inline_query.from_user.id)][0] += 1
 
     def do_search(self, bot, update):
         #self.logger_wrap(update.message, 'do_search')
@@ -542,6 +558,7 @@ class ChinaBot:
         result = update.chosen_inline_result.result_id
         message = update.chosen_inline_result.inline_message_id
         self.user = update.chosen_inline_result.from_user
+        self.inline_list.__delitem__(str(update.chosen_inline_result.from_user.id))
         self.query = update.chosen_inline_result.query
         k = telegram.ChosenInlineResult(result_id=result, from_user=self.user, query=self.query)
         self.answer[str(message)] = str(update.chosen_inline_result.result_id)
