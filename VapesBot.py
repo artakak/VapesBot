@@ -9,7 +9,7 @@ from sqlalchemy_wrapper import SQLAlchemy
 import random
 
 
-db = SQLAlchemy('sqlite:///Test.db')
+db = SQLAlchemy('sqlite:///Test_new.db')
 
 # Enable logging
 logging.basicConfig(
@@ -29,13 +29,14 @@ class Product(db.Model):
     product_test_one_flag = db.Column(db.Integer, unique=False)
     product_price_r = db.Column(db.Integer, unique=False)
     product_price_u = db.Column(db.Integer, unique=False)
+    product_discount = db.Column(db.String(20), unique=False)
     product_store_id = db.Column(db.String(20), unique=False)
     product_store_title = db.Column(db.String(20), unique=False)
     partner_url = db.Column(db.String(200), unique=False)
     orders_count = db.Column(db.Integer, unique=False)
     score = db.Column(db.Integer, unique=False)
 
-    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_test_one_flag, product_price_r, product_price_u, product_store_id, product_store_title, partner_url, orders_count, score):
+    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_test_one_flag, product_price_r, product_price_u, product_discount, product_store_id, product_store_title, partner_url, orders_count, score):
         self.product_id = product_id
         self.product_cat_id = product_cat_id
         self.product_name = product_name
@@ -44,6 +45,7 @@ class Product(db.Model):
         self.product_test_one_flag = product_test_one_flag
         self.product_price = product_price_r
         self.product_price = product_price_u
+        self.product_discount = product_discount
         self.product_store_id = product_store_id
         self.product_store_title = product_store_title
         self.partner_url = partner_url
@@ -189,6 +191,12 @@ class ChinaBot:
         else:
             return self.good_view(bot, update, products, args=None)
 
+    def if_discount(self, str):
+        if str == u'0%':
+            return ''
+        else:
+            return u' 🔥 '+str+''
+
     def good_view(self, bot, update, products, args):
         final = None
         if products:
@@ -199,13 +207,13 @@ class ChinaBot:
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products.score) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_r) + u' РУБ\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_r) + u' РУБ' + self.if_discount(str(products.product_discount))+'\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
                 elif locale == 'EN':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(products.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products.score) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products.product_price_u) + ' USD' + self.if_discount(str(products.product_discount))+'\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products.partner_url + ')\n']
             elif args == 'ID':
                 try:
@@ -217,13 +225,13 @@ class ChinaBot:
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products[0].product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(products[0].product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products[0].score) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][3] + str(products[0].product_price_r) + u' РУБ\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products[0].product_price_r) + u' РУБ' + self.if_discount(str(products[0].product_discount))+'\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products[0].partner_url + ')\n']
                 elif locale == 'EN':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + products[0].product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(products[0].product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + u'⭐' * int(products[0].score) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][3] + str(products[0].product_price_u) + ' USD\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(products[0].product_price_u) + ' USD' + self.if_discount(str(products[0].product_discount))+'\n'
                              u'[%s]' % self.ut['product'][locale][4] + '(' + products[0].partner_url + ')\n']
                 self.photo[str(products[0].product_id)] = products[0].product_other_picture.split('|')
                 return final
@@ -242,13 +250,13 @@ class ChinaBot:
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(product.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + u'⭐'*int(product.score) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_r) + u' РУБ\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_r) + u' РУБ' + self.if_discount(str(product.product_discount))+'\n'
                              u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
                 elif locale == 'EN':
                     final = [u'*%s*: ' % self.ut['product'][locale][0] + product.product_name + '\n'
                              u'*%s*: ' % self.ut['product'][locale][1] + str(product.product_store_title) + '\n'
                              u'*%s*: ' % self.ut['product'][locale][2] + u'⭐'*int(product.score) + '\n'
-                             u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_u) + ' USD\n'
+                             u'*%s*: ' % self.ut['product'][locale][3] + str(product.product_price_u) + ' USD' + self.if_discount(str(product.product_discount))+'\n'
                              u'[%s]' % self.ut['product'][locale][4] + '('+product.partner_url + ')\n' for product in products]
             return final
 
@@ -303,6 +311,8 @@ class ChinaBot:
         else:
             reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
         bot.sendMessage(update.message.chat_id, text=u'Язык был установлен RU 😎', reply_markup=reply_markup)
+        #bot.sendVideo(update.message.chat_id, 'https://www.youtube.com/watch?v=0i0FR4LsysU')
+        #bot.sendMessage(update.message.chat_id, text='https://www.youtube.com/watch?v=0i0FR4LsysU', reply_markup=reply_markup)
         self.del_previous(bot, update)
         self.start(bot, update, args=None)
         self.help(bot, update)
@@ -402,19 +412,18 @@ class ChinaBot:
                     if locale == 'RU':
                         for product in products:
                             results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
-                                                                    description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_r)+u' РУБ',
+                                                                    description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_r)+u' РУБ'+ self.if_discount(str(product.product_discount)),
                                                                     thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
                                                                     parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
                     elif locale == 'EN':
                         for product in products:
                             results.append(InlineQueryResultArticle(id=product.product_id, title=product.product_name,
-                                                                    description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_u)+u' USD',
+                                                                    description=u'⭐'*int(product.score)+u'  💵   '+str(product.product_price_u)+u' USD'+ self.if_discount(str(product.product_discount)),
                                                                     thumb_url=product.product_picture, input_message_content=InputTextMessageContent(u''.join(self.good_view(bot, update, product, 'Search_Inline')[0]),
                                                                     parse_mode=ParseMode.MARKDOWN), reply_markup=keyboard))
 
                     self.inline_list[str(update.inline_query.from_user.id)] = [1, len(results)/50]
                     self.inline_list[str(update.inline_query.from_user.id)].append(results)
-                    resultss = results[0:50]
                     bot.answerInlineQuery(update.inline_query.id, results[0:50], switch_pm_text=self.ut['live_here'][locale]+u'😊', next_offset='next_page')
 
     def pagination(self, bot, update):

@@ -4,7 +4,7 @@ from sqlalchemy_wrapper import SQLAlchemy
 from stem import Signal
 from stem.control import Controller
 
-db = SQLAlchemy('sqlite:///Test.db')
+db = SQLAlchemy('sqlite:///Test_new.db')
 
 
 class Product(db.Model):
@@ -17,13 +17,14 @@ class Product(db.Model):
     product_test_one_flag = db.Column(db.Integer, unique=False)
     product_price_r = db.Column(db.Integer, unique=False)
     product_price_u = db.Column(db.Integer, unique=False)
+    product_discount = db.Column(db.String(20), unique=False)
     product_store_id = db.Column(db.String(20), unique=False)
     product_store_title = db.Column(db.String(20), unique=False)
     partner_url = db.Column(db.String(200), unique=False)
     orders_count = db.Column(db.Integer, unique=False)
     score = db.Column(db.Integer, unique=False)
 
-    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_test_one_flag, product_price_r, product_price_u, product_store_id, product_store_title, partner_url, orders_count, score):
+    def __init__(self, product_id, product_cat_id, product_name, product_picture, product_other_picture, product_test_one_flag, product_price_r, product_price_u, product_discount, product_store_id, product_store_title, partner_url, orders_count, score):
         self.product_id = product_id
         self.product_cat_id = product_cat_id
         self.product_name = product_name
@@ -32,6 +33,7 @@ class Product(db.Model):
         self.product_test_one_flag = product_test_one_flag
         self.product_price_r = product_price_r
         self.product_price_u = product_price_u
+        self.product_discount = product_discount
         self.product_store_id = product_store_id
         self.product_store_title = product_store_title
         self.partner_url = partner_url
@@ -42,9 +44,16 @@ class Product(db.Model):
         return '<Product %r, %r>' % (self.product_id, self.product_name)
 
 
+def post_ali(id):
+    post_url_ali = 'http://gw.api.alibaba.com/openapi/param2/2/portals.open/api.getPromotionProductDetail/29981?fields=productUrl,productTitle,imageUrl,originalPrice,salePrice,packageType,lotNum,discount&productId='+id
+    post_req = requests.get(post_url_ali)
+    data_ali = post_req.json()
+    print 'ali get OK'
+    return data_ali
+
 def get_products_list():
         result = ('req3','req4','req5','req6')
-        post_url_api = 'http://api.epn.bz/json'
+        post_url_epn = 'http://api.epn.bz/json'
         req_pull={'req1':{'action':'list_categories','lang':'en'},
                   'req2':{'action':'offer_info','id':'32611301612','currency':'RUR,USD','lang':'en'},
                   'req3':{'action':'search','store':'335020,1247181','limit':'10000','currency':'RUR,USD','lang':'en'},
@@ -57,14 +66,20 @@ def get_products_list():
                    'api_version': '2',
                    'requests':req_pull}
 
-        post_req = requests.post(post_url_api, json=post_data)
-        data = json.loads(post_req.text)
+        post_req_epn = requests.post(post_url_epn, json=post_data)
+        data_epn = post_req_epn.json()
+        s = 0
         for k in result:
-            print k + ': ' + str(len(data['results'][k]['offers']))
-            for product in data['results'][k]['offers']:
-                if 'pcs/lot' not in product['name'] and 'pcs' not in product['name'] and 'PCS' not in product['name']:
-                    all_img = '|'.join(product['all_images'])
-                    db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, 0, product['prices']['RUR'], product['prices']['USD'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
+            print k + ': ' + str(len(data_epn['results'][k]['offers']))
+            for product in data_epn['results'][k]['offers']:
+                try:
+                    data_ali = post_ali(product['id'])
+                    if data_ali['result']['packageType'] == 'piece':
+                        print 'ali_piece OK ' + str(s)
+                        s += 1
+                        all_img = '|'.join(product['all_images'])
+                        db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, 0, product['prices']['RUR'], product['prices']['USD'], data_ali['result']['discount'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
+                except: continue
 
 
 def renew_connection():
