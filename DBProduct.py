@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import requests, requesocks, json, BeautifulSoup, re, time, random
+import requests, requesocks, BeautifulSoup, re, time, random, subprocess
 from sqlalchemy_wrapper import SQLAlchemy
 from stem import Signal
 from stem.control import Controller
@@ -83,15 +83,19 @@ def get_products_list():
 
 
 def renew_connection():
-    with Controller.from_port(port=9151) as controller:
-        controller.authenticate(password="password")
-        controller.signal(Signal.NEWNYM)
+    if os == '2':
+        subprocess.Popen("./change.sh 1", shell=True, stdout=subprocess.PIPE)
+        #time.sleep(10)
+    else:
+        with Controller.from_port(port=9051) as controller:
+            controller.authenticate(password="password")
+            controller.signal(Signal.NEWNYM)
 
 
 def get_all_picture():
     #session = requesocks.session()
-    proxies = {'http': 'socks5://127.0.0.1:9150',
-               'https': 'socks5://127.0.0.1:9150'}
+    proxies = {'http': 'socks5://127.0.0.1:9050',
+               'https': 'socks5://127.0.0.1:9050'}
     all_products_list = db.query(Product).all()
     print len(all_products_list)
     count = 1
@@ -137,6 +141,7 @@ def get_all_picture():
             count += 1
 
 a = raw_input()
+os = raw_input()
 if a == '1':
     db.create_all()
     get_products_list()
