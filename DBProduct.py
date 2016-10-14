@@ -83,11 +83,12 @@ def get_products_list():
 
 def renew_connection():
     if os == '2':
-        #subprocess.Popen("./change.sh 1", shell=True, stdout=subprocess.PIPE)
         tn = telnetlib.Telnet('127.0.0.1', '9051')
         tn.write("AUTHENTICATE \"password\"\n")
+        tn.write("SETEVENTS SIGNAL\n")
         tn.write("signal NEWNYM\n")
         tn.write("quit\n")
+        print(tn.read_all())
         time.sleep(10)
     else:
         with Controller.from_port(port=9151) as controller:
