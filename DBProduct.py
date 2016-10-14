@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import requests, requesocks, BeautifulSoup, re, time, random, subprocess
+import requests, requesocks, BeautifulSoup, re, time, random, subprocess, telnetlib
 from sqlalchemy_wrapper import SQLAlchemy
 from stem import Signal
 from stem.control import Controller
@@ -81,11 +81,14 @@ def get_products_list():
                         db.add(Product(product['id'], product['id_category'], product['name'], product['picture'], all_img, 0, product['prices']['RUR'], product['prices']['USD'], data_ali['result']['discount'], product['store_id'], product['store_title'], product['url'], product['orders_count'], product['evaluatescore']))
                 except: continue
 
-
 def renew_connection():
     if os == '2':
-        subprocess.Popen("./change.sh 1", shell=True, stdout=subprocess.PIPE)
-        #time.sleep(10)
+        #subprocess.Popen("./change.sh 1", shell=True, stdout=subprocess.PIPE)
+        tn = telnetlib.Telnet('127.0.0.1', '9051')
+        tn.write("AUTHENTICATE \"password\"\n")
+        tn.write("signal NEWNYM\n")
+        tn.write("quit\n")
+        time.sleep(10)
     else:
         with Controller.from_port(port=9051) as controller:
             controller.authenticate(password="password")
