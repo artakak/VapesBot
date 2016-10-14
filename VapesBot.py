@@ -9,7 +9,7 @@ from sqlalchemy_wrapper import SQLAlchemy
 import random
 
 
-db = SQLAlchemy('sqlite:///Test_new.db')
+db = SQLAlchemy('sqlite:///Test.db')
 
 # Enable logging
 logging.basicConfig(
