@@ -90,7 +90,7 @@ def renew_connection():
         tn.write("quit\n")
         time.sleep(10)
     else:
-        with Controller.from_port(port=9051) as controller:
+        with Controller.from_port(port=9151) as controller:
             controller.authenticate(password="password")
             controller.signal(Signal.NEWNYM)
 
@@ -109,7 +109,7 @@ def get_all_picture():
             while True:
                 try:
                     req = requesocks.get(product.partner_url, proxies=proxies)
-                    #time.sleep(random.randint(0,5))
+                    time.sleep(random.randint(0,5))
                     soup = BeautifulSoup.BeautifulSoup(req.text)
                     print product.partner_url
                     #print soup
