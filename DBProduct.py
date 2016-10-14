@@ -109,7 +109,7 @@ def get_all_picture():
             while True:
                 try:
                     req = requesocks.get(product.partner_url, proxies=proxies)
-                    time.sleep(random.randint(0,5))
+                    #time.sleep(random.randint(0,5))
                     soup = BeautifulSoup.BeautifulSoup(req.text)
                     print product.partner_url
                     #print soup
