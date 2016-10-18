@@ -195,7 +195,7 @@ class ChinaBot:
         if str == u'0%':
             return ''
         else:
-            return u' 🔥 '+str+''
+            return u' 🔥 -'+str+''
 
     def good_view(self, bot, update, products, args):
         final = None
