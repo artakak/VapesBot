@@ -567,7 +567,9 @@ class ChinaBot:
         result = update.chosen_inline_result.result_id
         message = update.chosen_inline_result.inline_message_id
         self.user = update.chosen_inline_result.from_user
-        self.inline_list.__delitem__(str(update.chosen_inline_result.from_user.id))
+        try:
+            self.inline_list.__delitem__(str(update.chosen_inline_result.from_user.id))
+        except: pass
         self.query = update.chosen_inline_result.query
         k = telegram.ChosenInlineResult(result_id=result, from_user=self.user, query=self.query)
         self.answer[str(message)] = str(update.chosen_inline_result.result_id)
